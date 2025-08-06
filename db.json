@@ -1,0 +1,114 @@
+{
+  "users": [
+    {
+      "id": "acc2",
+      "fullName": "Abobaker Mohamed Elsafi MohamedAli",
+      "email": "admin@hub.com",
+      "password": "admin",
+      "dob": "1994-01-04",
+      "address": "30 Tinningham Close",
+      "role": "admin",
+      "verified": true,
+      "profile": {
+        "profession": "",
+        "expertise": "",
+        "availability": "",
+        "photo": "",
+        "cv": ""
+      }
+    },
+    {
+      "id": "24b1",
+      "fullName": "Abobaker Mohamed Elsafi MohamedAli",
+      "email": "abubkerelsafi@gmail.com",
+      "password": "123456",
+      "dob": "1994-01-04",
+      "address": "30 Tinningham Close",
+      "role": "user",
+      "verified": true,
+      "profile": {
+        "profession": "",
+        "expertise": "",
+        "availability": "",
+        "photo": "",
+        "cv": ""
+      },
+      "country": "United Kingdom",
+      "profession": "Software Engineer",
+      "expertise": "Coding",
+      "availability": "ad-hoc",
+      "cv": "Abobaker_MohamedAli_CV_2025.pdf",
+      "cvPreview": "blob:http://localhost:3000/cae94e1c-404b-4c65-8a26-e6cdf0e43362",
+      "profilePic": "Mr Abobaker.jpeg",
+      "profilePicPreview": "blob:http://localhost:3000/d3c2d65f-b04a-4271-b354-fece62ca3e1f"
+    }
+  ],
+  "reports": [
+    {
+      "id": "3665",
+      "title": "Over charged at a toll",
+      "description": "I was driving ......",
+      "category": "corruption",
+      "location": "",
+      "anonymous": false,
+      "userEmail": "abubkerelsafi@gmail.com",
+      "status": "Resolved",
+      "createdAt": "2025-07-30T21:00:59.316Z"
+    },
+    {
+      "id": "1ae5",
+      "title": "I need",
+      "description": "I need a med...",
+      "category": "medical",
+      "location": "",
+      "anonymous": true,
+      "userEmail": "Anonymous",
+      "status": "Declined",
+      "createdAt": "2025-07-30T21:01:36.396Z"
+    },
+    {
+      "id": "d729",
+      "title": "weird item",
+      "description": "I am at the .....",
+      "category": "security",
+      "location": "KH",
+      "anonymous": false,
+      "userEmail": "abubkerelsafi@gmail.com",
+      "status": "Declined",
+      "createdAt": "2025-07-30T21:03:09.659Z"
+    },
+    {
+      "id": "72dc",
+      "title": "Power cut",
+      "description": "It is happening now in Khartoum ",
+      "category": "infrastructure",
+      "location": "KH",
+      "anonymous": false,
+      "userEmail": "abubkerelsafi@gmail.com",
+      "status": "Resolved",
+      "createdAt": "2025-07-30T21:08:28.435Z"
+    }
+  ],
+  "projects": [
+    {
+      "id": "p001",
+      "title": "Rebuilding the Uni Of Khartoum",
+      "summary": "This project is to rebuild the infrastructure of the uni of Khartoum after the Sudan's War"
+    },
+    {
+      "id": "p002",
+      "title": "Repair the Khartoum Main Hospital",
+      "summary": "This project involves infrastructure work and medical support"
+    },
+    {
+      "id": "p003",
+      "title": "Test Project to delete",
+      "summary": "I will test deleting functionality"
+    },
+    {
+      "id": "p85e2mu",
+      "title": "TESTING",
+      "summary": "This is a new testing project to test the Id generation"
+    }
+  ]
+}
