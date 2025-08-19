@@ -6,6 +6,9 @@ const AdminProjects = () => {
     id: "",
     title: "",
     summary: "",
+    cost: "",
+    status: "Planned",
+    donated: 0,
   });
   const [isEditing, setIsEditing] = useState(false);
 
@@ -24,18 +27,24 @@ const AdminProjects = () => {
   };
 
   const generateId = () => {
-    return "p" + Math.random().toString(36).substr(2, 6);
+    return Math.random().toString(36).substr(2, 6);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const updatedProject = {
+      ...form,
+      cost: parseFloat(form.cost),
+      donated: parseFloat(form.donated) || 0,
+    };
 
     if (isEditing) {
       try {
         await fetch(`http://localhost:5000/projects/${form.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: form.title, summary: form.summary }),
+          body: JSON.stringify(updatedProject),
         });
         resetForm();
         fetchProjects();
@@ -43,7 +52,10 @@ const AdminProjects = () => {
         console.error("Failed to update project:", err);
       }
     } else {
-      const newProject = { ...form, id: generateId() };
+      const newProject = {
+        ...updatedProject,
+        id: generateId(),
+      };
       try {
         await fetch("http://localhost:5000/projects", {
           method: "POST",
@@ -59,7 +71,14 @@ const AdminProjects = () => {
   };
 
   const resetForm = () => {
-    setForm({ id: "", title: "", summary: "" });
+    setForm({
+      id: "",
+      title: "",
+      summary: "",
+      cost: "",
+      status: "Planned",
+      donated: 0,
+    });
     setIsEditing(false);
   };
 
@@ -93,22 +112,35 @@ const AdminProjects = () => {
           className="input"
         />
         <textarea
-          placeholder="Short summary"
+          placeholder="Short Summary"
           value={form.summary}
           onChange={(e) => setForm({ ...form, summary: e.target.value })}
           required
           className="textarea"
         />
+        <input
+          type="number"
+          placeholder="Estimated Cost"
+          value={form.cost}
+          onChange={(e) => setForm({ ...form, cost: e.target.value })}
+          required
+          className="input"
+        />
+        <select
+          value={form.status}
+          onChange={(e) => setForm({ ...form, status: e.target.value })}
+          className="input"
+        >
+          <option value="Planned">Planned</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+        </select>
         <div className="flex gap-4">
           <button type="submit" className="btn-primary">
             {isEditing ? "Update Project" : "Add Project"}
           </button>
           {isEditing && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="btn-secondary"
-            >
+            <button type="button" onClick={resetForm} className="btn-secondary">
               Cancel
             </button>
           )}
@@ -117,12 +149,12 @@ const AdminProjects = () => {
 
       <div className="grid gap-6">
         {projects.map((project) => (
-          <div
-            key={project.id}
-            className="card border-l-4 border-primary bg-white/95"
-          >
+          <div key={project.id} className="card border-l-4 border-primary bg-white/95">
             <h3 className="text-lg font-bold text-primary">{project.title}</h3>
             <p className="text-gray-700 mt-1">{project.summary}</p>
+            <p className="text-sm text-gray-600">
+              <strong>Status:</strong> {project.status} | <strong>Cost:</strong> ${project.cost?.toLocaleString()} | <strong>Donated:</strong> ${project.donated?.toLocaleString()}
+            </p>
             <div className="mt-3 flex gap-4">
               <button
                 onClick={() => handleEdit(project)}

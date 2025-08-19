@@ -3,6 +3,7 @@ import AdminReports from "./AdminSections/AdminReports";
 import AdminProfessionals from "./AdminSections/AdminProfessionals";
 import AdminProjects from "./AdminSections/AdminProjects";
 import AdminUsers from "./AdminSections/AdminUsers";
+import AdminDonations from "./AdminSections/AdminDonations"; // ✅ new
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("reports");
@@ -16,7 +17,7 @@ const Admin = () => {
 
         {/* Tab Navigation */}
         <div className="flex justify-center gap-6 flex-wrap mb-8">
-          {["reports", "professionals", "projects", "users"].map((tab) => (
+          {["reports", "professionals", "projects", "users", "donations"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -30,6 +31,7 @@ const Admin = () => {
               {tab === "professionals" && "Professionals"}
               {tab === "projects" && "Rebuilding Projects"}
               {tab === "users" && "Users"}
+              {tab === "donations" && "Donations"}
             </button>
           ))}
         </div>
@@ -39,6 +41,7 @@ const Admin = () => {
         {activeTab === "professionals" && <AdminProfessionals />}
         {activeTab === "projects" && <AdminProjects />}
         {activeTab === "users" && <AdminUsers />}
+        {activeTab === "donations" && <AdminDonations />} {/* ✅ new tab panel */}
       </div>
     </div>
   );
