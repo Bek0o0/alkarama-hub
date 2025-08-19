@@ -23,7 +23,8 @@ function AppRoutes({ userRole, setUserRole }) {
   useEffect(() => {
     const role = getUserRole();
     setUserRole(role);
-  }, [location]);
+  }, [location, setUserRole]);
+
 
   return (
     <>
