@@ -40,7 +40,8 @@
       "cv": "Abobaker_MohamedAli_CV_2025.pdf",
       "cvPreview": "blob:http://localhost:3000/cae94e1c-404b-4c65-8a26-e6cdf0e43362",
       "profilePic": "Mr Abobaker.jpeg",
-      "profilePicPreview": "blob:http://localhost:3000/d3c2d65f-b04a-4271-b354-fece62ca3e1f"
+      "profilePicPreview": "blob:http://localhost:3000/d3c2d65f-b04a-4271-b354-fece62ca3e1f",
+      "tags": "software"
     }
   ],
   "reports": [
@@ -52,8 +53,9 @@
       "location": "",
       "anonymous": false,
       "userEmail": "abubkerelsafi@gmail.com",
-      "status": "Resolved",
-      "createdAt": "2025-07-30T21:00:59.316Z"
+      "status": "in_review",
+      "createdAt": "2025-07-30T21:00:59.316Z",
+      "publicMessage": "🚨 Incident Report: Over charged at a toll\n\nA civic concern was reported involving an unidentified employee at a public institution, located in an undisclosed location, on 30/07/2025, 22:00:59. \n\nThe incident report has remained unresolved for over 30 days and is now shared to raise public awareness and accountability.\n\n#Sudan #Transparency #AlkaramaHub #CivicWatch"
     },
     {
       "id": "1ae5",
@@ -63,7 +65,7 @@
       "location": "",
       "anonymous": true,
       "userEmail": "Anonymous",
-      "status": "Declined",
+      "status": "public",
       "createdAt": "2025-07-30T21:01:36.396Z"
     },
     {
@@ -93,22 +95,127 @@
     {
       "id": "p001",
       "title": "Rebuilding the Uni Of Khartoum",
-      "summary": "This project is to rebuild the infrastructure of the uni of Khartoum after the Sudan's War"
+      "summary": "This project is to rebuild the infrastructure of the uni of Khartoum after the Sudan's War",
+      "cost": 500000,
+      "donated": 4,
+      "status": "Planned",
+      "tags": [
+        "construction"
+      ]
     },
     {
       "id": "p002",
       "title": "Repair the Khartoum Main Hospital",
-      "summary": "This project involves infrastructure work and medical support"
+      "summary": "This project involves infrastructure work and medical support",
+      "cost": 300000,
+      "donated": 111114787,
+      "status": "Planned"
     },
     {
-      "id": "p003",
-      "title": "Test Project to delete",
-      "summary": "I will test deleting functionality"
+      "id": "7ew5vz",
+      "title": "Rebuild Khartoum Airport",
+      "summary": "This is a Planned project for testing the app",
+      "cost": 10000000000,
+      "status": "Planned",
+      "donated": 556024118,
+      "tags": [
+        "construction"
+      ]
     },
     {
-      "id": "p85e2mu",
-      "title": "TESTING",
-      "summary": "This is a new testing project to test the Id generation"
+      "id": "np93la",
+      "title": "Testing",
+      "summary": "testing",
+      "cost": 100,
+      "status": "Planned",
+      "donated": 0,
+      "tags": [
+        "software"
+      ]
+    },
+    {
+      "id": "y84sj4",
+      "title": "Test the matching logic",
+      "summary": "Just testing",
+      "cost": 1234,
+      "status": "Planned",
+      "donated": 0,
+      "tags": [
+        "education",
+        "engineering",
+        "construction",
+        "software"
+      ]
+    }
+  ],
+  "donations": [
+    {
+      "id": "1755628966720",
+      "projectId": "7ew5vz",
+      "userEmail": "admin@hub.com",
+      "amount": 111,
+      "method": "ZainPay",
+      "date": "2025-08-19T18:42:46.720Z"
+    },
+    {
+      "id": "4e45",
+      "projectId": "p002",
+      "amount": 222,
+      "date": "2025-08-19T19:25:11.401Z",
+      "name": "Abobaker Mohamed Elsafi MohamedAli",
+      "email": "admin@hub.com",
+      "dob": "1994-01-04"
+    },
+    {
+      "id": "b63d",
+      "projectId": "p002",
+      "amount": 111111111,
+      "date": "2025-08-19T19:25:20.123Z",
+      "name": "Abobaker Mohamed Elsafi MohamedAli",
+      "email": "admin@hub.com",
+      "dob": "1994-01-04"
+    },
+    {
+      "id": "a54e",
+      "projectId": "7ew5vz",
+      "donorName": "Abobaker Mohamed Elsafi MohamedAli",
+      "donorEmail": "admin@hub.com",
+      "donorDob": "1994-01-04",
+      "amount": 4444,
+      "method": "ZainPay",
+      "date": "19/08/2025, 20:28:29"
+    },
+    {
+      "id": "2c15",
+      "projectId": "7ew5vz",
+      "donorName": "Abobaker Mohamed Elsafi MohamedAli",
+      "donorEmail": "admin@hub.com",
+      "donorDob": "1994-01-04",
+      "amount": 444444,
+      "method": "ZainPay",
+      "date": "19/08/2025, 20:28:34"
+    },
+    {
+      "id": "009a",
+      "projectId": "7ew5vz",
+      "donorName": "Abobaker Mohamed Elsafi MohamedAli",
+      "donorEmail": "admin@hub.com",
+      "donorDob": "1994-01-04",
+      "amount": 555555555,
+      "method": "ZainPay",
+      "date": "19/08/2025, 20:28:40"
+    },
+    {
+      "id": "1755633376462",
+      "projectId": "p002",
+      "amount": 3232,
+      "currency": "USD",
+      "method": "mbook",
+      "invoice": "30091084830_a03ee075e6_5k.jpg",
+      "donorEmail": "admin@hub.com",
+      "donorName": "Abobaker Mohamed Elsafi MohamedAli",
+      "donorDob": "1994-01-04",
+      "timestamp": "2025-08-19T19:56:16.462Z"
     }
   ]
 }
