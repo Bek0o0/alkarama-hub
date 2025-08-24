@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { matchProfessionalsToProject } from "../utils/matching";
 
 const Profile = () => {
   const [formData, setFormData] = useState(null);
   const [editing, setEditing] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [matchedProjects, setMatchedProjects] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,10 +18,24 @@ const Profile = () => {
 
     fetch(`http://localhost:5000/users?email=${email}`)
       .then((res) => res.json())
-      .then((data) => {
+      .then(async (data) => {
         if (data.length > 0) {
-          setFormData(data[0]);
-          setUserId(data[0].id);
+          const user = data[0];
+          setFormData(user);
+          setUserId(user.id);
+
+          const projectsRes = await fetch("http://localhost:5000/projects");
+          const projects = await projectsRes.json();
+
+          const matched = projects
+            .map((project) => ({
+              project,
+              score: matchProfessionalsToProject(project, [user])[0]?.matchScore || 0,
+            }))
+            .filter((entry) => entry.score > 0)
+            .sort((a, b) => b.score - a.score);
+
+          setMatchedProjects(matched);
         } else {
           alert("User not found.");
           navigate("/signup");
@@ -78,6 +94,7 @@ const Profile = () => {
               <p><strong>Country:</strong> {formData.country || "N/A"}</p>
               <p><strong>Profession:</strong> {formData.profession || "N/A"}</p>
               <p><strong>Expertise:</strong> {formData.expertise || "N/A"}</p>
+              <p><strong>Expertise Tags:</strong> {formData.tags || "N/A"}</p>
               <p><strong>Availability:</strong> {formData.availability || "N/A"}</p>
               <p><strong>CV:</strong> {formData.cv || "None uploaded"}</p>
               <div className="mt-4">
@@ -123,6 +140,10 @@ const Profile = () => {
                 <textarea name="expertise" value={formData.expertise || ""} onChange={handleChange} className="textarea" />
               </div>
               <div>
+                <label className="label">Expertise Tags (comma-separated)</label>
+                <input name="tags" value={formData.tags || ""} onChange={handleChange} className="input" />
+              </div>
+              <div>
                 <label className="label">Availability</label>
                 <select name="availability" value={formData.availability || "part-time"} onChange={handleChange} className="input">
                   <option value="full-time">Full-time</option>
@@ -145,6 +166,25 @@ const Profile = () => {
               <button className="btn-secondary" onClick={() => setEditing(false)}>Cancel</button>
             </div>
           </>
+        )}
+
+        {!editing && (
+          <div className="mt-12">
+            <h2 className="text-xl font-semibold mb-4 text-textDark">Matched Projects</h2>
+            {matchedProjects.length === 0 ? (
+              <p className="text-gray-600">No matching projects found for your expertise yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {matchedProjects.map(({ project, score }) => (
+                  <li key={project.id} className="border p-3 rounded bg-white">
+                    <h4 className="font-semibold text-primary">{project.title}</h4>
+                    <p className="text-sm text-gray-600">{project.summary}</p>
+                    <p className="text-xs text-green-600">Match score: {score}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </div>
     </div>

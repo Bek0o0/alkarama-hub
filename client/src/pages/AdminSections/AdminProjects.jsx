@@ -9,6 +9,7 @@ const AdminProjects = () => {
     cost: "",
     status: "Planned",
     donated: 0,
+    tags: "",
   });
   const [isEditing, setIsEditing] = useState(false);
 
@@ -37,6 +38,7 @@ const AdminProjects = () => {
       ...form,
       cost: parseFloat(form.cost),
       donated: parseFloat(form.donated) || 0,
+      tags: form.tags.split(",").map((tag) => tag.trim().toLowerCase()),
     };
 
     if (isEditing) {
@@ -78,12 +80,13 @@ const AdminProjects = () => {
       cost: "",
       status: "Planned",
       donated: 0,
+      tags: "",
     });
     setIsEditing(false);
   };
 
   const handleEdit = (project) => {
-    setForm(project);
+    setForm({ ...project, tags: project.tags?.join(", ") || "" });
     setIsEditing(true);
   };
 
@@ -126,6 +129,14 @@ const AdminProjects = () => {
           required
           className="input"
         />
+        <input
+          type="text"
+          placeholder="Tags (comma separated)"
+          value={form.tags}
+          onChange={(e) => setForm({ ...form, tags: e.target.value })}
+          required
+          className="input"
+        />
         <select
           value={form.status}
           onChange={(e) => setForm({ ...form, status: e.target.value })}
@@ -155,6 +166,11 @@ const AdminProjects = () => {
             <p className="text-sm text-gray-600">
               <strong>Status:</strong> {project.status} | <strong>Cost:</strong> ${project.cost?.toLocaleString()} | <strong>Donated:</strong> ${project.donated?.toLocaleString()}
             </p>
+            {project.tags?.length > 0 && (
+              <p className="text-xs text-gray-500 mt-1">
+                <strong>Tags:</strong> {project.tags.join(", ")}
+              </p>
+            )}
             <div className="mt-3 flex gap-4">
               <button
                 onClick={() => handleEdit(project)}

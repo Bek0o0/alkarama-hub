@@ -23,7 +23,6 @@ const AdminDashboard = () => {
     try {
       const res = await fetch("http://localhost:5000/users");
       const data = await res.json();
-      // Only show regular users (formerly diaspora or citizens)
       const filtered = data.filter((u) => u.role === "user");
       setUsers(filtered);
     } catch (err) {
@@ -33,25 +32,28 @@ const AdminDashboard = () => {
 
   const resolveReport = async (id) => {
     const report = reports.find((r) => r.id === id);
-    if (!report || report.status === "Resolved") return;
+    if (!report || (report.status || "").toLowerCase() === "resolved") return;
 
     try {
       await fetch(`http://localhost:5000/reports/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "Resolved" }),
+        body: JSON.stringify({ status: "resolved" }),
       });
-      fetchReports(); // Refresh
+      fetchReports();
     } catch (err) {
       console.error("Failed to update report:", err);
     }
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (statusRaw) => {
+    const s = (statusRaw || "").toString().toLowerCase();
     const base = "px-2 py-1 rounded-full text-xs font-semibold";
-    if (status === "Pending") return `${base} bg-yellow-100 text-yellow-800`;
-    if (status === "Resolved") return `${base} bg-green-100 text-green-700`;
-    return base;
+    if (s === "pending" || s === "in_review") return `${base} bg-yellow-100 text-yellow-800`;
+    if (s === "resolved") return `${base} bg-green-100 text-green-700`;
+    if (s === "declined") return `${base} bg-red-100 text-red-700`;
+    if (s === "public") return `${base} bg-blue-100 text-blue-700`;
+    return `${base} bg-gray-100 text-gray-700`;
   };
 
   return (
@@ -68,29 +70,32 @@ const AdminDashboard = () => {
             <p className="text-gray-500 italic">No reports submitted yet.</p>
           ) : (
             <div className="space-y-6">
-              {reports.map((r) => (
-                <div
-                  key={r.id}
-                  className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white/95 p-6 rounded-xl shadow border-l-4 border-primary"
-                >
-                  <div className="mb-4 md:mb-0">
-                    <h3 className="text-lg font-bold text-primary">{r.title}</h3>
-                    <p className="text-sm text-gray-500">{new Date(r.createdAt).toLocaleDateString()}</p>
-                    <span className={getStatusBadge(r.status)}>{r.status}</span>
-                  </div>
-                  <button
-                    onClick={() => resolveReport(r.id)}
-                    className={`px-4 py-2 rounded text-sm font-semibold transition duration-300 ${
-                      r.status === "Resolved"
-                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        : "bg-green-600 text-white hover:bg-green-700"
-                    }`}
-                    disabled={r.status === "Resolved"}
+              {reports.map((r) => {
+                const isResolved = (r.status || "").toString().toLowerCase() === "resolved";
+                return (
+                  <div
+                    key={r.id}
+                    className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white/95 p-6 rounded-xl shadow border-l-4 border-primary"
                   >
-                    {r.status === "Resolved" ? "Resolved" : "Mark as Resolved"}
-                  </button>
-                </div>
-              ))}
+                    <div className="mb-4 md:mb-0">
+                      <h3 className="text-lg font-bold text-primary">{r.title}</h3>
+                      <p className="text-sm text-gray-500">{new Date(r.createdAt).toLocaleDateString()}</p>
+                      <span className={getStatusBadge(r.status)}>{(r.status || "").toString()}</span>
+                    </div>
+                    <button
+                      onClick={() => resolveReport(r.id)}
+                      className={`px-4 py-2 rounded text-sm font-semibold transition duration-300 ${
+                        isResolved
+                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          : "bg-green-600 text-white hover:bg-green-700"
+                      }`}
+                      disabled={isResolved}
+                    >
+                      {isResolved ? "Resolved" : "Mark as Resolved"}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

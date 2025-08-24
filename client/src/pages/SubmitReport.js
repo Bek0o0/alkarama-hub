@@ -9,14 +9,22 @@ const SubmitReport = () => {
     category: "corruption",
     location: "",
     anonymous: false,
+    evidence: null,
   });
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const { name, value, type, checked, files } = e.target;
+    if (type === "file") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: files[0],
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -31,8 +39,9 @@ const SubmitReport = () => {
     const newReport = {
       ...formData,
       userEmail: formData.anonymous ? "Anonymous" : email,
-      status: "pending",
+      status: "pending", // <- lowercase, consistent
       createdAt: new Date().toISOString(),
+      evidence: formData.evidence ? URL.createObjectURL(formData.evidence) : null,
     };
 
     try {
@@ -57,6 +66,7 @@ const SubmitReport = () => {
       category: "corruption",
       location: "",
       anonymous: false,
+      evidence: null,
     });
   };
 
@@ -114,6 +124,16 @@ const SubmitReport = () => {
               className="input"
             />
           </div>
+          <div>
+            <label className="label">Attach Evidence (image or PDF)</label>
+            <input
+              type="file"
+              name="evidence"
+              accept="image/*,.pdf"
+              onChange={handleChange}
+              className="input"
+            />
+          </div>
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -122,7 +142,9 @@ const SubmitReport = () => {
               onChange={handleChange}
               className="w-5 h-5 text-primary border-gray-300 rounded focus:ring focus:ring-primary"
             />
-            <label className="text-textDark font-medium">Submit anonymously</label>
+            <label className="text-textDark font-medium">
+              Submit anonymously
+            </label>
           </div>
           <button type="submit" className="btn-primary w-full">
             Submit Report
