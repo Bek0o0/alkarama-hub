@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Reports from "./pages/Reports";
@@ -13,9 +14,10 @@ import MyReports from "./pages/MyReports";
 import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import Projects from "./pages/Projects";
+import PublicReports from "./pages/PublicReports";
+import PrivacyTerms from "./pages/PrivacyTerms";
 import { getUserRole } from "./utils/auth";
 import bg from "./assets/bg.jpg";
-
 
 function AppRoutes({ userRole, setUserRole }) {
   const location = useLocation();
@@ -25,7 +27,6 @@ function AppRoutes({ userRole, setUserRole }) {
     setUserRole(role);
   }, [location, setUserRole]);
 
-
   return (
     <>
       <Navbar userRole={userRole} />
@@ -33,6 +34,7 @@ function AppRoutes({ userRole, setUserRole }) {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<PrivacyTerms />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
           <Route path="/login" element={<Login setUserRole={setUserRole} />} />
@@ -58,8 +60,10 @@ function AppRoutes({ userRole, setUserRole }) {
             element={userRole === "user" ? <Profile /> : <Navigate to="/login" />}
           />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/public-reports" element={<PublicReports />} />
         </Routes>
       </main>
+      <Footer />
     </>
   );
 }
