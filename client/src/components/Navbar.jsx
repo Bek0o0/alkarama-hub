@@ -24,6 +24,8 @@ const Navbar = ({ userRole }) => {
           <li><Link to="/" className="text-textDark hover:text-primary">Home</Link></li>
           <li><Link to="/about" className="text-textDark hover:text-primary">About</Link></li>
           <li><Link to="/projects" className="text-textDark hover:text-primary">Projects</Link></li>
+          <li><Link to="/public-reports" className="text-textDark hover:text-primary">Public Reports</Link></li>
+          <li><Link to="/privacy" className="text-textDark hover:text-primary">Privacy & Terms</Link></li>
 
           {userRole === "user" && (
             <>
@@ -45,11 +47,11 @@ const Navbar = ({ userRole }) => {
           )}
 
           {userRole && (
-            <>
-              <li>
-                <button onClick={handleLogout} className="text-secondary hover:underline transition">Logout</button>
-              </li>
-            </>
+            <li>
+              <button onClick={handleLogout} className="text-secondary hover:underline transition">
+                Logout
+              </button>
+            </li>
           )}
         </ul>
       </div>
