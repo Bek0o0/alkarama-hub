@@ -2,55 +2,151 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-size: cover;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-position: center;
-  color: #1a1a1a;
+/* ---------- Brand & base ---------- */
+:root{
+  /* brand palette */
+  --primary: #166534;         /* deep green */
+  --primary-600: #0e4f2a;     /* darker hover */
+  --accent: #16a34a;          /* fresh green accent */
+  --gold: #c9a64a;            /* warm gold */
+  --bg-soft: #f7faf9;         /* subtle paper */
+  --text: #1a1a1a;
+}
+
+html, body {
+  color: var(--text);
   font-family: ui-sans-serif, system-ui, sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-
-/* ✅ Tailwind-only rules — safe for @apply */
-.section {
-  @apply py-12 px-4 sm:px-6 lg:px-8;
+/* Keep your hero background image behaviour */
+body {
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
-.section-title {
-  @apply text-3xl md:text-4xl font-extrabold text-primary mb-6 border-b-2 border-green-300;
+/* Utility classes to map CSS vars (works even if Tailwind theme doesn’t define them) */
+.text-primary { color: var(--primary) !important; }
+.bg-primary   { background-color: var(--primary) !important; }
+.border-primary { border-color: var(--primary) !important; }
+
+.text-gold    { color: var(--gold) !important; }
+.bg-gold      { background-color: var(--gold) !important; }
+
+/* ---------- Layout helpers ---------- */
+.container { @apply max-w-7xl mx-auto; }  /* wider, airier */
+.section   { @apply py-16 px-6; }         /* bigger rhythm on pages */
+.centered  { @apply flex items-center justify-center; }
+
+/* Section titles */
+.section-title{
+  @apply text-3xl md:text-4xl font-extrabold mb-6;
+  color: var(--primary);
+  border-bottom: 2px solid color-mix(in oklab, var(--primary) 25%, transparent);
 }
 
-.card {
-  @apply bg-white/90 rounded-xl shadow-md p-6 transition hover:shadow-lg;
+/* ---------- Surfaces ---------- */
+.card{
+  @apply bg-white/80 backdrop-blur rounded-2xl shadow-md p-6 transition-transform duration-200;
+}
+.card:hover{
+  @apply shadow-xl -translate-y-[2px];
 }
 
-.btn-primary {
-  @apply bg-primary text-white px-5 py-2 rounded-lg font-medium hover:bg-green-800 transition;
+/* “Glass” panel (for hero / highlights) */
+.glass{
+  @apply bg-white/70 backdrop-blur-md rounded-2xl shadow;
+  box-shadow: 0 10px 30px rgb(16 24 40 / 8%);
 }
 
-.btn-secondary {
-  @apply bg-gold text-white px-5 py-2 rounded-lg font-medium hover:brightness-90 transition;
+/* ---------- Buttons ---------- */
+.btn{ @apply inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl font-semibold transition active:scale-[.98]; }
+
+.btn-primary{
+  @apply btn text-white;
+  background: var(--primary);
+}
+.btn-primary:hover{ background: var(--primary-600); }
+
+.btn-secondary{
+  @apply btn text-white;
+  background: var(--gold);
+}
+.btn-secondary:hover{ filter: brightness(.95); }
+
+.btn-outline{
+  @apply btn border;
+  border-color: color-mix(in oklab, var(--primary) 35%, #e5e7eb);
+  color: var(--primary);
+}
+.btn-outline:hover{
+  background: color-mix(in oklab, var(--primary) 8%, transparent);
 }
 
-.input {
-  @apply w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary;
+.btn-ghost{
+  @apply btn text-gray-700 hover:bg-gray-100;
 }
 
-.textarea {
-  @apply w-full border border-gray-300 rounded-md px-3 py-2 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-primary;
+/* ---------- Inputs / Forms ---------- */
+.input{
+  @apply w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600/40 focus:border-green-700/50 transition;
+  background: white;
+}
+.textarea{
+  @apply w-full border border-gray-300 rounded-lg px-3 py-2 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-green-600/40 focus:border-green-700/50 transition;
+  background: white;
+}
+.label{ @apply block font-medium text-gray-700 mb-1; }
+
+/* Inline helper text */
+.form-hint{ @apply text-xs text-gray-500 mt-1; }
+
+/* ---------- Badges / Chips ---------- */
+.badge{ @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold; }
+.badge-green  { @apply badge bg-green-100 text-green-700; }
+.badge-amber  { @apply badge bg-amber-100 text-amber-700; }
+.badge-red    { @apply badge bg-red-100 text-red-700; }
+.badge-blue   { @apply badge bg-blue-100 text-blue-700; }
+.badge-gray   { @apply badge bg-gray-100 text-gray-700; }
+
+/* ---------- Navigation ---------- */
+.nav-link{
+  @apply text-sm font-medium text-gray-700 hover:text-primary transition;
+}
+.nav-link-active{
+  color: var(--primary);
+  position: relative;
+}
+.nav-link-active::after{
+  content: "";
+  @apply absolute -bottom-1 left-0 right-0 h-[2px];
+  background: linear-gradient(90deg, var(--gold), var(--primary));
+  border-radius: 9999px;
 }
 
-.label {
-  @apply block font-medium text-gray-700 mb-1;
+/* ---------- Tables (admin) ---------- */
+.table{
+  @apply w-full text-sm;
+}
+.table thead tr{ @apply border-b; }
+.table th{ @apply text-left py-2 pr-4 font-semibold text-gray-700; }
+.table td{ @apply py-2 pr-4; }
+.table tbody tr{ @apply border-b; }
+.table tbody tr:hover{ @apply bg-gray-50; }
+
+/* ---------- Hero/CTA ---------- */
+.hero-title{
+  @apply text-4xl md:text-5xl font-extrabold;
+  color: var(--primary);
+  letter-spacing: -0.01em;
+}
+.hero-subtitle{
+  @apply text-lg md:text-xl text-gray-700;
 }
 
-.container {
-  @apply max-w-6xl mx-auto;
-}
-
-.centered {
-  @apply flex items-center justify-center;
-}
+/* ---------- Small utilities ---------- */
+.shadow-soft{ box-shadow: 0 10px 30px rgb(16 24 40 / 8%); }
+.bg-soft    { background: var(--bg-soft); }
