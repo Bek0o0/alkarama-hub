@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const userEmail = localStorage.getItem("userEmail");
+  const userRole = localStorage.getItem("userRole"); // <-- NEW: role gate
   const userName =
     localStorage.getItem("userName") ||
     localStorage.getItem("fullName") ||
@@ -13,10 +14,15 @@ const Projects = () => {
     fetch("http://localhost:5000/projects")
       .then((res) => res.json())
       .then((data) => setProjects(data || []))
-      .catch(() => setProjects([])); // <-- fixed: closed ) properly
+      .catch(() => setProjects([]));
   }, []);
 
   const postInterest = async (projectId, title) => {
+    // Gate: only logged-in standard users can express interest
+    if (userRole !== "user") {
+      alert("Only signed-in users can register interest in projects.");
+      return;
+    }
     if (!userEmail) {
       alert("Please login first to register your interest.");
       return;
@@ -105,12 +111,16 @@ const Projects = () => {
                   <Link to={`/projects/${p.id}`} className="btn-secondary">
                     View Details
                   </Link>
-                  <button
-                    className="btn-primary"
-                    onClick={() => postInterest(p.id, p.title)}
-                  >
-                    I’m Interested
-                  </button>
+
+                  {/* Show "I'm Interested" ONLY for signed-in users (not admins/guests) */}
+                  {userRole === "user" && (
+                    <button
+                      className="btn-primary"
+                      onClick={() => postInterest(p.id, p.title)}
+                    >
+                      I’m Interested
+                    </button>
+                  )}
                 </div>
               </div>
             );

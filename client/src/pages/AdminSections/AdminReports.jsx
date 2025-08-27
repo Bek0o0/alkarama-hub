@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import StatusBadge from "../../components/StatusBadge";
 
 const STATUS_OPTIONS = ["Pending", "Resolved", "Declined", "Public"];
@@ -8,17 +9,33 @@ const AdminReports = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
+  // email -> { id, fullName }
+  const [usersByEmail, setUsersByEmail] = useState({});
 
   useEffect(() => {
-    fetchReports();
+    fetchAll();
   }, []);
 
-  const fetchReports = async () => {
+  const fetchAll = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/reports");
-      const data = await res.json();
+      const [r1, r2] = await Promise.all([
+        fetch("http://localhost:5000/reports"),
+        fetch("http://localhost:5000/users"),
+      ]);
+      const data = await r1.json();
       setReports(Array.isArray(data) ? data : []);
+
+      const users = await r2.json();
+      if (Array.isArray(users)) {
+        const m = {};
+        for (const u of users) {
+          if (u?.email) m[u.email] = { id: u.id, fullName: u.fullName || "" };
+        }
+        setUsersByEmail(m);
+      } else {
+        setUsersByEmail({});
+      }
     } catch (err) {
       console.error("Failed to load reports:", err);
       setReports([]);
@@ -34,7 +51,7 @@ const AdminReports = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      fetchReports();
+      fetchAll();
     } catch (err) {
       console.error("Failed to update status:", err);
       alert("Error updating status.");
@@ -51,6 +68,22 @@ const AdminReports = () => {
     return matchesStatus && matchesSearch;
   });
 
+  const reporterLink = (email) => {
+    if (!email || email === "Anonymous") return "Anonymous";
+    const info = usersByEmail[email];
+    const text = info?.fullName || email;
+    const key = info?.id ? info.id : email;
+    return (
+      <Link
+        to={`/admin/users/${encodeURIComponent(key)}`}
+        className="text-brandBlue hover:underline"
+        title="View user profile"
+      >
+        {text}
+      </Link>
+    );
+  };
+
   return (
     <div className="max-w-6xl mx-auto py-12 px-4">
       <div className="bg-white/90 shadow-soft rounded-2xl p-8">
@@ -59,7 +92,6 @@ const AdminReports = () => {
           <h1 className="text-3xl font-extrabold text-brandNavy">Civic Reports</h1>
         </div>
 
-        {/* Filters (no logic change, just UI sugar) */}
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-6">
           <input
             type="text"
@@ -81,7 +113,13 @@ const AdminReports = () => {
                 </option>
               ))}
             </select>
-            <button className="btn-outline" onClick={() => { setSearch(""); setStatusFilter(""); }}>
+            <button
+              className="btn-outline"
+              onClick={() => {
+                setSearch("");
+                setStatusFilter("");
+              }}
+            >
               Clear
             </button>
           </div>
@@ -109,7 +147,7 @@ const AdminReports = () => {
                       <h3 className="text-lg font-bold text-brandNavy">{report.title}</h3>
                       <p className="text-sm text-gray-600">
                         <strong>Submitted:</strong> {created} &middot{" "}
-                        <strong>By:</strong> {report.userEmail || "Anonymous"}
+                        <strong>By:</strong> {reporterLink(report.userEmail)}
                       </p>
                       <p className="text-sm text-gray-600">
                         <strong>Category:</strong> {report.category} &middot{" "}
@@ -122,7 +160,6 @@ const AdminReports = () => {
                         <StatusBadge value={report.status || "Pending"} />
                       </div>
 
-                      {/* Keep your existing approve/decline behavior, plus a safe dropdown */}
                       <div className="flex gap-2 justify-end">
                         <select
                           className="input w-40"
@@ -141,7 +178,6 @@ const AdminReports = () => {
 
                   <p className="mt-3 text-gray-800">{report.description}</p>
 
-                  {/* Evidence (file or link) */}
                   {evidence && (
                     <div className="mt-3">
                       <a

@@ -6,7 +6,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // ── original submit logic (unchanged)
+  // ── original submit logic (only + store fullName)
   const submit = async (e) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
@@ -27,6 +27,8 @@ export default function Login() {
       }
       localStorage.setItem("userEmail", user.email);
       localStorage.setItem("userRole", user.role || "user");
+      // NEW: persist full name so admin tables can resolve it
+      localStorage.setItem("fullName", user.fullName || "");
       alert("Logged in.");
       window.location.href = "/";
     } catch (e2) {

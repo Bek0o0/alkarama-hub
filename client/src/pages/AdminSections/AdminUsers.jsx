@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 const ROLES = ["user", "admin"];
 
@@ -137,9 +138,31 @@ const AdminUsers = () => {
                 {filtered.map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50">
                     <td className="font-semibold text-brandNavy">
-                      {u.fullName || "—"}
+                      {u?.id ? (
+                        <Link
+                          to={`/admin/users/${encodeURIComponent(u.id)}`}
+                          className="text-brandBlue hover:underline"
+                          title="View user profile"
+                        >
+                          {u.fullName || "—"}
+                        </Link>
+                      ) : (
+                        u.fullName || "—"
+                      )}
                     </td>
-                    <td>{u.email || "—"}</td>
+                    <td>
+                      {u?.email ? (
+                        <Link
+                          to={`/admin/users/${encodeURIComponent(u.email)}`}
+                          className="text-brandBlue hover:underline"
+                          title="View user profile"
+                        >
+                          {u.email}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td>
                       <select
                         className="input"

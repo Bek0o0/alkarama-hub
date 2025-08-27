@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 // Try to use your existing matcher, but fall back safely if not found.
 let externalMatcher;
 try {
-  // Adjust path if your matching file is elsewhere:
-  // from AdminSections/ to project root: "../../matching"
-  // (This matches the structure you've been using in other Admin pages.)
   // eslint-disable-next-line global-require, import/no-unresolved
   externalMatcher = require("../../matching");
 } catch (e) {
@@ -34,11 +32,9 @@ function defaultMatch(projects, users) {
       const profTokens = tokenize(u.profession);
       let score = 0;
 
-      // tag/expertise overlap
       expertiseArr.forEach((x) => {
         if (pTokens.has(x)) score += 2;
       });
-      // profession mentions in project title/summary
       profTokens.forEach((x) => {
         if (pTokens.has(x)) score += 1;
       });
@@ -178,8 +174,32 @@ export default function AdminMatching() {
                       <tbody>
                         {matches.map(({ user, score }) => (
                           <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="font-semibold text-brandNavy">{user.fullName || "—"}</td>
-                            <td>{user.email || "—"}</td>
+                            <td className="font-semibold text-brandNavy">
+                              {user?.id || user?.email ? (
+                                <Link
+                                  to={`/admin/users/${encodeURIComponent(user.id || user.email)}`}
+                                  className="text-brandBlue hover:underline"
+                                  title="View user profile"
+                                >
+                                  {user.fullName || "—"}
+                                </Link>
+                              ) : (
+                                user.fullName || "—"
+                              )}
+                            </td>
+                            <td>
+                              {user?.email ? (
+                                <Link
+                                  to={`/admin/users/${encodeURIComponent(user.email)}`}
+                                  className="text-brandBlue hover:underline"
+                                  title="View user profile"
+                                >
+                                  {user.email}
+                                </Link>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
                             <td>{user.profession || "—"}</td>
                             <td>
                               {Array.isArray(user.expertise) && user.expertise.length > 0 ? (

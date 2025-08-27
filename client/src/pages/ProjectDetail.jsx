@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -10,6 +10,9 @@ export default function ProjectDetail() {
   const [paymentMethod, setPaymentMethod] = useState("mbook");
   const [invoice, setInvoice] = useState(null);
   const [user, setUser] = useState(null);
+
+  const role = useMemo(() => localStorage.getItem("userRole"), []);
+  const email = useMemo(() => localStorage.getItem("userEmail"), []);
 
   const fetchProject = () => {
     fetch(`http://localhost:5000/projects/${id}`)
@@ -26,9 +29,9 @@ export default function ProjectDetail() {
   };
 
   useEffect(() => {
-    const email = localStorage.getItem("userEmail");
-    if (email) {
-      fetch(`http://localhost:5000/users?email=${email}`)
+    const e = localStorage.getItem("userEmail");
+    if (e) {
+      fetch(`http://localhost:5000/users?email=${e}`)
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data) && data.length > 0) setUser(data[0]);
@@ -36,43 +39,6 @@ export default function ProjectDetail() {
     }
     fetchProject();
   }, [id]);
-
-  // NEW: register "I'm Interested" without touching donation flow
-  const handleVolunteerInterest = async () => {
-    const email = localStorage.getItem("userEmail");
-    if (!email) {
-      alert("Please login first to register your interest.");
-      navigate("/login");
-      return;
-    }
-    try {
-      const name =
-        localStorage.getItem("userName") ||
-        localStorage.getItem("fullName") ||
-        (user && (user.fullName || user.email)) ||
-        "N/A";
-
-      const payload = {
-        id: Date.now().toString(),
-        projectId: id,
-        projectTitle: project?.title || "",
-        userEmail: email,
-        userName: name,
-        timestamp: new Date().toISOString(),
-      };
-
-      await fetch("http://localhost:5000/interests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      alert("Thanks! Your interest was recorded for admin review.");
-    } catch (e) {
-      console.error("Volunteer interest failed:", e);
-      alert("Could not submit interest. Please try again.");
-    }
-  };
 
   const handleDonate = async () => {
     if (!user) {
@@ -132,6 +98,27 @@ export default function ProjectDetail() {
     }
   };
 
+  const expressInterest = async () => {
+    if (role !== "user" || !email) return;
+    const payload = {
+      id: Date.now().toString(),
+      projectId: id,
+      userEmail: email,
+      createdAt: new Date().toISOString(),
+    };
+    try {
+      await fetch("http://localhost:5000/interests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      alert("Thanks — your interest has been recorded for the admin.");
+    } catch (e) {
+      console.error(e);
+      alert("Could not record your interest.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
@@ -157,7 +144,7 @@ export default function ProjectDetail() {
       case "mbook":
         return (
           <div className="bg-blue-50 border p-4 rounded text-sm">
-            <p><strong>Transfer via M‑BOK (Bank of Khartoum)</strong></p>
+            <p><strong>Transfer via M-BOK (Bank of Khartoum)</strong></p>
             <p>Account Name: <strong>Alkarama Hub</strong></p>
             <p>Account Number: <strong>1234-5678-9012</strong></p>
             <p>Bank: <strong>Bank of Khartoum</strong></p>
@@ -206,12 +193,14 @@ export default function ProjectDetail() {
           <p className="italic text-sm mt-1">${remaining.toLocaleString()} still needed</p>
         </div>
 
-        {/* New: Volunteer interest button (separate from donation) */}
-        <button onClick={handleVolunteerInterest} className="btn-secondary w-full">
-          I’m Interested to Volunteer
-        </button>
+        {/* Users only: interest CTA */}
+        {role === "user" && (
+          <div className="flex gap-3">
+            <button onClick={expressInterest} className="btn-outline">I’m Interested (Volunteer)</button>
+          </div>
+        )}
 
-        {/* Donation Form (unchanged logic) */}
+        {/* Donation Form */}
         <div className="mt-6 space-y-4">
           <label className="label">Donation Amount (USD)</label>
           <input
@@ -229,7 +218,7 @@ export default function ProjectDetail() {
             onChange={(e) => setPaymentMethod(e.target.value)}
             className="input w-full"
           >
-            <option value="mbook">Bank of Khartoum (M‑BOK)</option>
+            <option value="mbook">Bank of Khartoum (M-BOK)</option>
             <option value="fawry">Fawry</option>
             <option value="cash">Cash / Collection Point</option>
           </select>

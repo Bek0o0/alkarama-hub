@@ -18,6 +18,9 @@ import PublicReports from "./pages/PublicReports";
 import PrivacyTerms from "./pages/PrivacyTerms";
 import { getUserRole } from "./utils/auth";
 import bg from "./assets/bg.jpg";
+import AdminUserView from "./pages/AdminSections/AdminUserView";
+
+
 
 function AppRoutes({ userRole, setUserRole }) {
   const location = useLocation();
@@ -54,13 +57,14 @@ function AppRoutes({ userRole, setUserRole }) {
           <Route
             path="/my-reports"
             element={userRole === "user" ? <MyReports /> : <Navigate to="/login" />}
-          />
+            />
           <Route
             path="/profile"
             element={userRole === "user" ? <Profile /> : <Navigate to="/login" />}
-          />
+            />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/public-reports" element={<PublicReports />} />
+          <Route path="/admin/users/:key" element={<AdminUserView />} />
         </Routes>
       </main>
       <Footer />

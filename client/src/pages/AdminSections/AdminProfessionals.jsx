@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 const AdminProfessionals = () => {
   const [users, setUsers] = useState([]);
@@ -42,7 +43,7 @@ const AdminProfessionals = () => {
     }
   };
 
-  // (Optional) delete user if your original supported it; otherwise remove this function + button
+  // (Optional) delete user if your original supported it
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this professional?")) return;
     try {
@@ -54,7 +55,7 @@ const AdminProfessionals = () => {
     }
   };
 
-  // Derive list of professionals (role "user" or has profession/expertise)
+  // Derive list of professionals
   const professionals = useMemo(() => {
     return users.filter((u) => {
       const looksProfessional =
@@ -103,7 +104,7 @@ const AdminProfessionals = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <div className="flex gap-3 items-center">
+        <div className="flex gap-3 items-center">
             <select
               className="input"
               value={professionFilter}
@@ -147,10 +148,33 @@ const AdminProfessionals = () => {
                 {/* Header */}
                 <div className="flex justify-between gap-4 flex-wrap">
                   <div className="min-w-[260px]">
-                    <h3 className="text-lg font-bold text-brandNavy">{u.fullName || "—"}</h3>
+                    <h3 className="text-lg font-bold text-brandNavy">
+                      {u?.id || u?.email ? (
+                        <Link
+                          to={`/admin/users/${encodeURIComponent(u.id || u.email)}`}
+                          className="text-brandBlue hover:underline"
+                          title="View user profile"
+                        >
+                          {u.fullName || "—"}
+                        </Link>
+                      ) : (
+                        u.fullName || "—"
+                      )}
+                    </h3>
                     <p className="text-sm text-gray-600">
-                      <strong>Email:</strong> {u.email || "—"} &middot{" "}
-                      <strong>Verified:</strong> {u.verified ? "Yes" : "No"}
+                      <strong>Email:</strong>{" "}
+                      {u?.email ? (
+                        <Link
+                          to={`/admin/users/${encodeURIComponent(u.email)}`}
+                          className="text-brandBlue hover:underline"
+                          title="View user profile"
+                        >
+                          {u.email}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}{" "}
+                      &middot <strong>Verified:</strong> {u.verified ? "Yes" : "No"}
                     </p>
                     <p className="text-sm text-gray-600">
                       <strong>Profession:</strong> {u.profession || "—"}
@@ -201,7 +225,6 @@ const AdminProfessionals = () => {
 
                 {/* Actions */}
                 <div className="mt-4 flex justify-end gap-4">
-                  {/* Optional delete (keep only if your original file had this) */}
                   <button
                     onClick={() => handleDelete(u.id)}
                     className="text-red-600 hover:underline text-sm"

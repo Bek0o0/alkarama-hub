@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 /* ---------- Live clock ---------- */
 function LiveClock() {
@@ -42,10 +42,12 @@ function RotatingGallery() {
         />
       ))}
 
+      {/* gradient + caption */}
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-black/60 via-black/20 to-transparent">
         <p className="text-white/95 text-sm md:text-base">{GALLERY[i].caption}</p>
       </div>
 
+      {/* dots */}
       <div className="absolute right-4 top-4 flex gap-2">
         {GALLERY.map((_, idx) => (
           <button
@@ -62,6 +64,9 @@ function RotatingGallery() {
 
 /* ---------- Home ---------- */
 export default function Home() {
+  const navigate = useNavigate();
+  const role = localStorage.getItem("userRole"); // "admin" | "user" | null
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
@@ -79,26 +84,44 @@ export default function Home() {
             Report issues safely and connect diaspora expertise to verified rebuilding projects.
           </p>
 
-          {/* Single CTA only (no Explore Projects here to avoid duplication) */}
-          <div className="mt-8">
-            <Link to="/submit-report" className="btn-primary px-6 py-3 text-base">
-              Submit a Report
-            </Link>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            {role === "admin" ? (
+              <>
+                <button
+                  onClick={() => navigate("/admin")}
+                  className="btn-primary px-6 py-3 text-base"
+                >
+                  Go to Admin Dashboard
+                </button>
+                <Link to="/public-reports" className="btn-secondary px-6 py-3 text-base">
+                  Public Reports
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/submit-report" className="btn-primary px-6 py-3 text-base">
+                  Submit a Report
+                </Link>
+              </>
+            )}
           </div>
         </div>
         <div className="h-1 w-full bg-brandGold" />
       </section>
 
-      {/* Tiles (NOW clickable to replace About/Projects in navbar) */}
+      {/* Tiles */}
       <section className="px-4 mt-10">
         <div className="max-w-7xl mx-auto grid gap-6 md:grid-cols-3">
-          <Link
-            to="/submit-report"
-            className="rounded-xl shadow-soft p-6 bg-brandNavySoft text-white hover:brightness-110 transition"
-          >
-            <h3 className="text-lg font-bold">Civic Reporting</h3>
-            <p className="text-white/80 text-sm mt-1">Flag issues safely — anonymity optional.</p>
-          </Link>
+          {/* Hide Civic Reporting card for admins (prevents entering user-only flow) */}
+          {role !== "admin" && (
+            <Link
+              to="/submit-report"
+              className="rounded-xl shadow-soft p-6 bg-brandNavySoft text-white hover:brightness-110 transition"
+            >
+              <h3 className="text-lg font-bold">Civic Reporting</h3>
+              <p className="text-white/80 text-sm mt-1">Flag issues safely — anonymity optional.</p>
+            </Link>
+          )}
 
           <Link
             to="/projects"

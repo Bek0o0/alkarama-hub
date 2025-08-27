@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 const AdminDonations = () => {
   const [donations, setDonations] = useState([]);
@@ -32,6 +33,36 @@ const AdminDonations = () => {
       (d.projectId || "").toLowerCase().includes(q)
     );
   });
+
+  const donorCell = (d) => {
+    const email = d.donorEmail || "";
+    const text = d.donorName || email || "—";
+    if (!email) return text;
+    const key = encodeURIComponent(email);
+    return (
+      <Link
+        to={`/admin/users/${key}`}
+        className="text-brandBlue hover:underline"
+        title="View user profile"
+      >
+        {text}
+      </Link>
+    );
+  };
+
+  const emailCell = (d) => {
+    const email = d.donorEmail || "";
+    if (!email) return "—";
+    return (
+      <Link
+        to={`/admin/users/${encodeURIComponent(email)}`}
+        className="text-brandBlue hover:underline"
+        title="View user profile"
+      >
+        {email}
+      </Link>
+    );
+  };
 
   return (
     <div className="max-w-6xl mx-auto py-12 px-4">
@@ -76,8 +107,8 @@ const AdminDonations = () => {
               <tbody>
                 {filtered.map((d) => (
                   <tr key={d.id} className="hover:bg-gray-50">
-                    <td className="font-semibold text-brandNavy">{d.donorName || "—"}</td>
-                    <td>{d.donorEmail || "—"}</td>
+                    <td className="font-semibold text-brandNavy">{donorCell(d)}</td>
+                    <td>{emailCell(d)}</td>
                     <td>{d.donorDob || d.donorDOB || "—"}</td>
                     <td>${(d.amount || 0).toLocaleString()}</td>
                     <td>{d.method || "—"}</td>
