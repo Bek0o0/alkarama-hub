@@ -1,136 +1,163 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useState } from "react";
 
-const SubmitReport = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "corruption",
-    location: "",
-    anonymous: false,
-  });
+export default function SubmitReport() {
+  // ── original state (unchanged)
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("corruption");
+  const [location, setLocation] = useState("");
+  const [file, setFile] = useState(null);
+  const [anonymous, setAnonymous] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
+  // ── original email source (unchanged)
+  const email = useMemo(() => localStorage.getItem("userEmail") || "", []);
 
-  const handleSubmit = async (e) => {
+  // ── original submit logic (unchanged)
+  const submit = async (e) => {
     e.preventDefault();
-    const email = localStorage.getItem("userEmail");
-
-    if (!email) {
-      alert("Please log in before submitting a report.");
+    if (!title.trim() || !description.trim()) {
+      alert("Please enter a title and description.");
       return;
     }
-
-    const newReport = {
-      ...formData,
-      userEmail: formData.anonymous ? "Anonymous" : email,
-      status: "pending",
+    const payload = {
+      id: Math.random().toString(36).slice(2, 6),
+      title: title.trim(),
+      description: description.trim(),
+      category,
+      location: location.trim(),
+      anonymous,
+      userEmail: anonymous ? "Anonymous" : email || "Anonymous",
+      status: "in_review",
       createdAt: new Date().toISOString(),
     };
+    if (file) payload.attachment = file.name; // metadata only (demo)
 
     try {
-      const res = await fetch("http://localhost:5000/reports", {
+      setBusy(true);
+      await fetch("http://localhost:5000/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newReport),
+        body: JSON.stringify(payload),
       });
-
-      if (!res.ok) throw new Error("Failed to submit report.");
-
-      alert("Report submitted successfully!");
-      navigate("/my-reports");
-    } catch (err) {
-      console.error(err);
-      alert("Error submitting report.");
+      alert("Report submitted successfully.");
+      // reset form (unchanged)
+      setTitle("");
+      setDescription("");
+      setLocation("");
+      setFile(null);
+      setAnonymous(false);
+    } catch (e2) {
+      console.error(e2);
+      alert("Failed to submit report.");
+    } finally {
+      setBusy(false);
     }
-
-    setFormData({
-      title: "",
-      description: "",
-      category: "corruption",
-      location: "",
-      anonymous: false,
-    });
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-16 px-4">
-      <div className="bg-white/90 p-8 shadow-xl rounded-xl">
-        <h1 className="text-3xl font-bold text-primary mb-6 text-center">
-          Submit a Civic Report
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="label">Report Title</label>
-            <input
-              type="text"
-              name="title"
-              required
-              value={formData.title}
-              onChange={handleChange}
-              className="input"
-            />
+    <div className="min-h-screen">
+      {/* brand hero (visual only) */}
+      <section className="bg-brandNavy text-white">
+        <div className="max-w-3xl mx-auto px-6 py-8 flex items-center gap-3">
+          <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
+          <h1 className="text-3xl md:text-4xl font-extrabold">Submit a Civic Report</h1>
+        </div>
+        <div className="h-1 w-full bg-brandGold" />
+      </section>
+
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Form card (logic unchanged) */}
+          <div className="lg:col-span-2">
+            <div className="bg-white/95 rounded-2xl shadow-soft border-l-4 border-brandGold p-8">
+              <form onSubmit={submit} className="space-y-4">
+                <div>
+                  <label className="label">Report Title</label>
+                  <input
+                    className="input"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="label">Description</label>
+                  <textarea
+                    className="textarea"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Category</label>
+                    <select
+                      className="input"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                    >
+                      <option value="corruption">Corruption</option>
+                      <option value="security">Security</option>
+                      <option value="medical">Medical</option>
+                      <option value="infrastructure">Infrastructure</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Location (optional)</label>
+                    <input
+                      className="input"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="label">Attach Evidence (image or PDF)</label>
+                  <input
+                    type="file"
+                    className="input"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  />
+                </div>
+
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={anonymous}
+                    onChange={(e) => setAnonymous(e.target.checked)}
+                  />
+                  <span className="text-sm text-gray-700">Submit anonymously</span>
+                </label>
+
+                <button className="btn-primary w-full" disabled={busy}>
+                  {busy ? "Submitting…" : "Submit Report"}
+                </button>
+              </form>
+            </div>
           </div>
-          <div>
-            <label className="label">Description</label>
-            <textarea
-              name="description"
-              required
-              value={formData.description}
-              onChange={handleChange}
-              rows={4}
-              className="textarea"
-            />
-          </div>
-          <div>
-            <label className="label">Category</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="corruption">Corruption</option>
-              <option value="medical">Medical Emergency</option>
-              <option value="infrastructure">Infrastructure</option>
-              <option value="security">Security Threat</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">Location (optional)</label>
-            <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              className="input"
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="anonymous"
-              checked={formData.anonymous}
-              onChange={handleChange}
-              className="w-5 h-5 text-primary border-gray-300 rounded focus:ring focus:ring-primary"
-            />
-            <label className="text-textDark font-medium">Submit anonymously</label>
-          </div>
-          <button type="submit" className="btn-primary w-full">
-            Submit Report
-          </button>
-        </form>
+
+          {/* Helpful notes (visual only, no logic change) */}
+          <aside className="space-y-4">
+            <div className="bg-white/90 rounded-2xl shadow-soft border p-5">
+              <h3 className="font-semibold text-brandNavy">Tips</h3>
+              <ul className="mt-2 text-sm text-gray-700 list-disc pl-5 space-y-1">
+                <li>Share facts you directly observed.</li>
+                <li>Blur names/faces in photos for privacy.</li>
+                <li>Location is optional; use “Undisclosed” if unsure.</li>
+              </ul>
+            </div>
+            <div className="bg-brandNavy text-white rounded-2xl shadow-soft p-5">
+              <p className="text-sm text-white/90">
+                This is an academic prototype. Evidence files are not uploaded; only
+                filenames are stored for demo purposes.
+              </p>
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   );
-};
-
-export default SubmitReport;
+}

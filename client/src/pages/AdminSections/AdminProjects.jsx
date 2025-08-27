@@ -2,175 +2,200 @@ import React, { useEffect, useState } from "react";
 
 const AdminProjects = () => {
   const [projects, setProjects] = useState([]);
-  const [form, setForm] = useState({
-    id: "",
-    title: "",
-    summary: "",
-    cost: "",
-    status: "Planned",
-    donated: 0,
-  });
-  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState("");
+  const [summary, setSummary] = useState("");
+  const [cost, setCost] = useState("");
+  const [tags, setTags] = useState("");
+  const [search, setSearch] = useState("");
+  const [interestCounts, setInterestCounts] = useState({}); // NEW
 
   useEffect(() => {
     fetchProjects();
+    fetchInterestCounts(); // NEW
   }, []);
 
   const fetchProjects = async () => {
     try {
+      setLoading(true);
       const res = await fetch("http://localhost:5000/projects");
       const data = await res.json();
-      setProjects(data);
+      setProjects(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load projects:", err);
+      setProjects([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const generateId = () => {
-    return Math.random().toString(36).substr(2, 6);
+  // NEW: pre-compute counts by projectId
+  const fetchInterestCounts = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/interests");
+      const list = await res.json();
+      const counts = {};
+      (Array.isArray(list) ? list : []).forEach((i) => {
+        counts[i.projectId] = (counts[i.projectId] || 0) + 1;
+      });
+      setInterestCounts(counts);
+    } catch (e) {
+      console.error("Failed to load interests:", e);
+      setInterestCounts({});
+    }
   };
 
-  const handleSubmit = async (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
-
-    const updatedProject = {
-      ...form,
-      cost: parseFloat(form.cost),
-      donated: parseFloat(form.donated) || 0,
-    };
-
-    if (isEditing) {
-      try {
-        await fetch(`http://localhost:5000/projects/${form.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedProject),
-        });
-        resetForm();
-        fetchProjects();
-      } catch (err) {
-        console.error("Failed to update project:", err);
-      }
-    } else {
+    try {
       const newProject = {
-        ...updatedProject,
-        id: generateId(),
+        id: Date.now().toString(),
+        title,
+        summary,
+        cost: parseFloat(cost) || 0,
+        donated: 0,
+        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+        status: "Planned",
       };
-      try {
-        await fetch("http://localhost:5000/projects", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newProject),
-        });
-        resetForm();
-        fetchProjects();
-      } catch (err) {
-        console.error("Failed to add project:", err);
-      }
+      await fetch("http://localhost:5000/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProject),
+      });
+      setTitle(""); setSummary(""); setCost(""); setTags("");
+      fetchProjects();
+      fetchInterestCounts(); // keep counts fresh
+    } catch (err) {
+      console.error("Add failed:", err);
+      alert("Error adding project.");
     }
-  };
-
-  const resetForm = () => {
-    setForm({
-      id: "",
-      title: "",
-      summary: "",
-      cost: "",
-      status: "Planned",
-      donated: 0,
-    });
-    setIsEditing(false);
-  };
-
-  const handleEdit = (project) => {
-    setForm(project);
-    setIsEditing(true);
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Delete this project?")) return;
     try {
-      await fetch(`http://localhost:5000/projects/${id}`, {
-        method: "DELETE",
-      });
+      await fetch(`http://localhost:5000/projects/${id}`, { method: "DELETE" });
       fetchProjects();
+      fetchInterestCounts();
     } catch (err) {
-      console.error("Failed to delete project:", err);
+      console.error("Delete failed:", err);
+      alert("Error deleting project.");
     }
   };
 
+  const handleStatusChange = async (id, status) => {
+    try {
+      await fetch(`http://localhost:5000/projects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      fetchProjects();
+    } catch (err) {
+      console.error("Status update failed:", err);
+      alert("Error updating status.");
+    }
+  };
+
+  const filtered = projects.filter((p) =>
+    search.trim().length === 0
+      ? true
+      : (p.title || "").toLowerCase().includes(search.toLowerCase()) ||
+        (p.summary || "").toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-textDark mb-6">Rebuilding Projects</h2>
-
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow mb-8 space-y-4">
-        <input
-          type="text"
-          placeholder="Project Title"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          required
-          className="input"
-        />
-        <textarea
-          placeholder="Short Summary"
-          value={form.summary}
-          onChange={(e) => setForm({ ...form, summary: e.target.value })}
-          required
-          className="textarea"
-        />
-        <input
-          type="number"
-          placeholder="Estimated Cost"
-          value={form.cost}
-          onChange={(e) => setForm({ ...form, cost: e.target.value })}
-          required
-          className="input"
-        />
-        <select
-          value={form.status}
-          onChange={(e) => setForm({ ...form, status: e.target.value })}
-          className="input"
-        >
-          <option value="Planned">Planned</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
-        </select>
-        <div className="flex gap-4">
-          <button type="submit" className="btn-primary">
-            {isEditing ? "Update Project" : "Add Project"}
-          </button>
-          {isEditing && (
-            <button type="button" onClick={resetForm} className="btn-secondary">
-              Cancel
-            </button>
-          )}
+    <div className="max-w-6xl mx-auto py-12 px-4">
+      <div className="bg-white/90 shadow-soft rounded-2xl p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
+          <h1 className="text-3xl font-extrabold text-brandNavy">Manage Projects</h1>
         </div>
-      </form>
 
-      <div className="grid gap-6">
-        {projects.map((project) => (
-          <div key={project.id} className="card border-l-4 border-primary bg-white/95">
-            <h3 className="text-lg font-bold text-primary">{project.title}</h3>
-            <p className="text-gray-700 mt-1">{project.summary}</p>
-            <p className="text-sm text-gray-600">
-              <strong>Status:</strong> {project.status} | <strong>Cost:</strong> ${project.cost?.toLocaleString()} | <strong>Donated:</strong> ${project.donated?.toLocaleString()}
-            </p>
-            <div className="mt-3 flex gap-4">
-              <button
-                onClick={() => handleEdit(project)}
-                className="text-sm text-green-700 hover:underline"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(project.id)}
-                className="text-sm text-red-600 hover:underline"
-              >
-                Delete
-              </button>
-            </div>
+        {/* Add new project */}
+        <form onSubmit={handleAdd} className="space-y-4 mb-8 bg-brandIvory/50 p-4 rounded-xl">
+          <h2 className="text-lg font-bold text-brandNavy">Add New Project</h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <input className="input" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <input className="input" placeholder="Estimated Cost (USD)" type="number" value={cost} onChange={(e) => setCost(e.target.value)} />
           </div>
-        ))}
+          <textarea className="textarea" placeholder="Summary" value={summary} onChange={(e) => setSummary(e.target.value)} required />
+          <input className="input" placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
+          <button type="submit" className="btn-primary">Add Project</button>
+        </form>
+
+        {/* Search bar */}
+        <div className="flex justify-between items-center mb-4">
+          <input className="input md:w-1/2" placeholder="Search projects…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <button onClick={() => setSearch("")} className="btn-outline">Clear</button>
+        </div>
+
+        {loading ? (
+          <p className="text-gray-600 italic">Loading projects…</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-gray-500 italic">No projects found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th>Title</th>
+                  <th>Summary</th>
+                  <th>Cost</th>
+                  <th>Donated</th>
+                  <th>Status</th>
+                  <th>Tags</th>
+                  <th>Interested</th> {/* NEW */}
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((p) => (
+                  <tr key={p.id} className="hover:bg-gray-50">
+                    <td className="font-semibold text-brandNavy">{p.title}</td>
+                    <td className="max-w-xs truncate">{p.summary}</td>
+                    <td>${(p.cost || 0).toLocaleString()}</td>
+                    <td>${(p.donated || 0).toLocaleString()}</td>
+                    <td>
+                      <select
+                        value={p.status || "Planned"}
+                        onChange={(e) => handleStatusChange(p.id, e.target.value)}
+                        className="input"
+                      >
+                        <option>Planned</option>
+                        <option>Active</option>
+                        <option>Completed</option>
+                      </select>
+                    </td>
+                    <td>
+                      {Array.isArray(p.tags) && p.tags.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {p.tags.map((t) => (
+                            <span key={t} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs italic">None</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className="text-sm font-semibold">
+                        {interestCounts[p.id] || 0}
+                      </span>
+                    </td>
+                    <td>
+                      <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:underline text-sm">
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

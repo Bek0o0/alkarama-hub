@@ -1,156 +1,182 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-const Signup = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+async function sha256Hex(text) {
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export default function Signup() {
+  const [form, setForm] = useState({
     fullName: "",
     email: "",
     password: "",
-    confirmPassword: "",
-    dob: "",
-    address: "",
+    dob: "",            // ← NEW (required)
+    country: "",
+    profession: "",
+    expertise: "",
+    idType: "National ID",
+    idNumber: "",
+    accept: false,
   });
+  const [busy, setBusy] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const on = (k) => (e) =>
+    setForm({
+      ...form,
+      [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value,
+    });
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match.");
+    if (!form.accept) {
+      alert("You must accept the Privacy & Terms.");
+      return;
+    }
+    if (!form.fullName.trim() || !form.email.trim() || !form.password.trim() || !form.dob) {
+      alert("Please complete all required fields (Full Name, Email, Password, Date of Birth).");
       return;
     }
 
-    try {
-      // Check if user already exists
-      const res = await fetch(`http://localhost:5000/users?email=${formData.email}`);
-      const existing = await res.json();
+    // Optional ID: store only last-4 + hash
+    let verification;
+    if (form.idNumber.trim()) {
+      verification = {
+        idType: form.idType,
+        idLast4: form.idNumber.trim().slice(-4),
+        idHash: await sha256Hex(form.idNumber.trim()),
+        createdAt: new Date().toISOString(),
+      };
+    }
 
-      if (existing.length > 0) {
-        alert("Email already registered.");
+    const newUser = {
+      id: Math.random().toString(36).slice(2, 6),
+      fullName: form.fullName.trim(),
+      email: form.email.trim(),
+      password: form.password, // demo only
+      dob: form.dob,           // ← NEW (stored as YYYY-MM-DD)
+      country: form.country.trim(),
+      profession: form.profession.trim(),
+      expertise: form.expertise.trim(), // comma-separated ok
+      role: "user",
+      verified: true,
+      createdAt: new Date().toISOString(),
+      verification,
+      profile: { profession: "", expertise: "", availability: "", photo: "", cv: "" },
+    };
+
+    try {
+      setBusy(true);
+      // uniqueness check (simple)
+      const check = await fetch(
+        `http://localhost:5000/users?email=${encodeURIComponent(newUser.email)}`
+      );
+      const exists = await check.json();
+      if (Array.isArray(exists) && exists.length) {
+        alert("An account with this email already exists.");
+        setBusy(false);
         return;
       }
 
-      const newUser = {
-        fullName: formData.fullName,
-        email: formData.email,
-        password: formData.password,
-        dob: formData.dob,
-        address: formData.address,
-        role: formData.email === "admin@hub.com" ? "admin" : "user",
-        verified: false,
-        profile: {
-          profession: "",
-          expertise: "",
-          availability: "",
-          photo: "",
-          cv: "",
-        },
-      };
-
-      // Save to backend
-      const createRes = await fetch("http://localhost:5000/users", {
+      await fetch("http://localhost:5000/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),
       });
 
-      if (!createRes.ok) {
-        throw new Error("Failed to register user.");
-      }
-
-      alert("Account created! Please login.");
-      navigate("/login");
-    } catch (err) {
-      console.error(err);
-      alert("Error registering user.");
+      alert("Account created. Please login.");
+      window.location.href = "/login";
+    } catch (e2) {
+      console.error(e2);
+      alert("Could not create account.");
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="bg-white/90 p-8 rounded-xl shadow-md w-full max-w-md">
-        <h1 className="text-3xl font-bold text-primary mb-6 text-center">
-          Create Account
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+    <div className="max-w-3xl mx-auto py-16 px-4">
+      <div className="bg-white/95 rounded-2xl shadow-soft p-8">
+        <div className="flex items-center gap-3 mb-4">
+          <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
+          <h1 className="text-3xl font-extrabold text-brandNavy">Create an Account</h1>
+        </div>
+        <p className="text-xs text-gray-600">
+          Academic prototype — use dummy data only. You can enter a National ID or Passport number for demo verification.
+          We store a <strong>one-way hash</strong> and <strong>last 4 digits</strong> only.
+        </p>
+
+        <form onSubmit={submit} className="mt-6 grid md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
             <label className="label">Full Name</label>
-            <input
-              type="text"
-              name="fullName"
-              required
-              value={formData.fullName}
-              onChange={handleChange}
-              className="input"
-            />
+            <input className="input" value={form.fullName} onChange={on("fullName")} />
           </div>
+
           <div>
             <label className="label">Email</label>
-            <input
-              type="email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="input"
-            />
+            <input type="email" className="input" value={form.email} onChange={on("email")} />
           </div>
           <div>
             <label className="label">Password</label>
-            <input
-              type="password"
-              name="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className="input"
-            />
+            <input type="password" className="input" value={form.password} onChange={on("password")} />
           </div>
-          <div>
-            <label className="label">Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              required
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="input"
-            />
-          </div>
+
+          {/* NEW required field */}
           <div>
             <label className="label">Date of Birth</label>
-            <input
-              type="date"
-              name="dob"
-              required
-              value={formData.dob}
-              onChange={handleChange}
-              className="input"
-            />
+            <input type="date" className="input" value={form.dob} onChange={on("dob")} />
+          </div>
+
+          <div>
+            <label className="label">Country</label>
+            <input className="input" value={form.country} onChange={on("country")} />
           </div>
           <div>
-            <label className="label">Address / Location</label>
+            <label className="label">Profession</label>
+            <input className="input" value={form.profession} onChange={on("profession")} />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="label">Expertise (keywords)</label>
             <input
-              type="text"
-              name="address"
-              required
-              value={formData.address}
-              onChange={handleChange}
               className="input"
+              placeholder="e.g., cardiology, Java, logistics"
+              value={form.expertise}
+              onChange={on("expertise")}
             />
           </div>
-          <button type="submit" className="btn-primary w-full">
-            Sign Up
-          </button>
+
+          <div>
+            <label className="label">ID Type (optional)</label>
+            <select className="input" value={form.idType} onChange={on("idType")}>
+              <option>National ID</option>
+              <option>Passport</option>
+            </select>
+          </div>
+          <div>
+            <label className="label">ID / Passport Number (optional)</label>
+            <input
+              className="input"
+              value={form.idNumber}
+              onChange={on("idNumber")}
+              placeholder="Enter a dummy number for demo"
+            />
+          </div>
+
+          <div className="md:col-span-2 flex items-center gap-2 mt-2">
+            <input type="checkbox" checked={form.accept} onChange={on("accept")} />
+            <span className="text-sm">
+              I accept the <a className="underline" href="/privacy">Privacy & Terms</a>
+            </span>
+          </div>
+
+          <div className="md:col-span-2">
+            <button className="btn-primary w-full" disabled={busy}>
+              {busy ? "Creating…" : "Create Account"}
+            </button>
+          </div>
         </form>
       </div>
     </div>
   );
-};
-
-export default Signup;
+}

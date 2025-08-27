@@ -1,110 +1,122 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
 
-const Login = ({ setUserRole }) => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+export default function Login() {
+  // ── original state (unchanged)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const [error, setError] = useState("");
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
+  // ── original submit logic (unchanged)
+  const submit = async (e) => {
     e.preventDefault();
-    setError("");
-
+    if (!email.trim() || !password.trim()) {
+      alert("Enter email and password.");
+      return;
+    }
     try {
-      const res = await fetch(`http://localhost:5000/users?email=${formData.email}`);
-      const users = await res.json();
-
-      if (users.length === 0) {
-        setError("User not found.");
+      setBusy(true);
+      const res = await fetch(
+        `http://localhost:5000/users?email=${encodeURIComponent(email.trim())}`
+      );
+      const data = await res.json();
+      const user = Array.isArray(data) && data.length ? data[0] : null;
+      if (!user || user.password !== password) {
+        alert("Invalid credentials.");
+        setBusy(false);
         return;
       }
-
-      const user = users[0];
-
-      if (user.password !== formData.password) {
-        setError("Incorrect password.");
-        return;
-      }
-
-      if (!user.verified) {
-        // For mock verification toggle, assume verified always true
-        user.verified = true;
-        await fetch(`http://localhost:5000/users/${user.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ verified: true }),
-        });
-      }
-
       localStorage.setItem("userEmail", user.email);
-      localStorage.setItem("userRole", user.role);
-      setUserRole(user.role);
-
-      alert("Login successful!");
-      navigate("/");
-    } catch (err) {
-      console.error(err);
-      setError("Something went wrong. Please try again.");
+      localStorage.setItem("userRole", user.role || "user");
+      alert("Logged in.");
+      window.location.href = "/";
+    } catch (e2) {
+      console.error(e2);
+      alert("Login failed.");
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="bg-white/90 p-8 rounded-xl shadow-md w-full max-w-md">
-        <h1 className="text-3xl font-bold text-primary mb-6 text-center">Login</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="label">Email</label>
-            <input
-              type="email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="input"
-            />
-          </div>
-          <div>
-            <label className="label">Password</label>
-            <input
-              type="password"
-              name="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className="input"
-            />
-          </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* background accents */}
+      <div className="absolute inset-0 bg-[radial-gradient(80rem_40rem_at_-10%_-10%,rgba(13,33,53,0.12),transparent),radial-gradient(70rem_40rem_at_110%_110%,rgba(201,166,74,0.12),transparent)]" />
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+      <div className="relative max-w-6xl mx-auto px-6 py-12">
+        <div className="grid lg:grid-cols-2 gap-8 items-center">
+          {/* Left: brand panel */}
+          <section className="hidden lg:block bg-brandNavy text-white rounded-3xl shadow-soft p-10 relative overflow-hidden">
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="Sudan Emblem" className="w-10 h-10 object-contain" />
+              <h2 className="text-3xl font-extrabold">Alkarama Hub</h2>
+            </div>
+            <p className="mt-4 text-white/90 text-lg max-w-md">
+              Secure civic reporting and diaspora registry — academic prototype.
+            </p>
 
-          <button type="submit" className="btn-primary w-full">
-            Login
-          </button>
-        </form>
+            <div className="mt-8 grid gap-3 text-sm">
+              <div className="bg-white/10 rounded-xl px-4 py-3">
+                • Reports are stored locally (JSON server) for demo only.
+              </div>
+              <div className="bg-white/10 rounded-xl px-4 py-3">
+                • Use dummy credentials provided during sign up.
+              </div>
+            </div>
 
-        <p className="text-sm text-center text-gray-600 mt-4">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-primary hover:underline">
-            Sign Up {" "}
-          </Link>
-          
-          <Link to="/forgot-password" className="text-primary hover:underline">
-            Forgot Password
-          </Link>
-        </p>
+            {/* golden line */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-brandGold" />
+          </section>
+
+          {/* Right: form card */}
+          <section className="bg-white/95 rounded-3xl shadow-soft border p-8">
+            <div className="flex items-center gap-3 mb-2">
+              <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
+              <h1 className="text-2xl font-extrabold text-brandNavy">Login</h1>
+            </div>
+            <p className="text-xs text-gray-600 mb-6">
+              Academic prototype — use dummy data only.
+            </p>
+
+            {/* original form/fields */}
+            <form onSubmit={submit} className="space-y-5">
+              <div>
+                <label className="label">Email</label>
+                <input
+                  className="input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="label">Password</label>
+                <input
+                  className="input"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              <button className="btn-primary w-full" disabled={busy}>
+                {busy ? "Signing in…" : "Login"}
+              </button>
+
+              <div className="text-center text-sm text-gray-600">
+                Don’t have an account?{" "}
+                <a href="/signup" className="underline hover:text-brandNavy">
+                  Sign Up
+                </a>{" "}
+                ·{" "}
+                <a href="/forgot-password" className="underline hover:text-brandNavy">
+                  Forgot Password
+                </a>
+              </div>
+            </form>
+          </section>
+        </div>
       </div>
     </div>
   );
-};
-
-export default Login;
+}

@@ -22,34 +22,37 @@ const reports = [
   },
 ];
 
-const Reports = () => {
+export default function Reports() {
   return (
-    <div className="max-w-5xl mx-auto py-20 px-4">
-      <h1 className="text-4xl font-extrabold text-primary mb-10 text-center">
-        Situation Reports
-      </h1>
-      <div className="space-y-6">
-        {reports.map((report) => (
-          <div
-            key={report.id}
-            className="bg-white/90 p-6 rounded-xl shadow hover:shadow-lg transition duration-300 border-l-4 border-primary"
-          >
-            <h2 className="text-xl font-semibold text-primary mb-1">
-              {report.title}
-            </h2>
-            <p className="text-sm text-gray-500 mb-2">{report.date}</p>
-            <p className="text-textDark">{report.summary}</p>
-            <Link
-              to={`/reports/${report.id}`}
-              className="inline-block mt-4 text-sm font-medium text-secondary hover:underline"
+    <div className="max-w-6xl mx-auto py-16 px-4">
+      <div className="bg-white/90 shadow-soft rounded-2xl p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
+          <h1 className="text-3xl font-extrabold text-brandNavy">Situation Reports</h1>
+        </div>
+        <p className="text-gray-600 mb-8">
+          These are static sample situation reports included for awareness and design evaluation.
+        </p>
+
+        <div className="space-y-6">
+          {reports.map((r) => (
+            <article
+              key={r.id}
+              className="bg-white/95 border-l-4 border-brandGold rounded-xl shadow-soft p-6 hover:shadow-md transition"
             >
-              Read more →
-            </Link>
-          </div>
-        ))}
+              <h2 className="text-xl font-semibold text-brandNavy mb-1">{r.title}</h2>
+              <p className="text-sm text-gray-600 mb-2">{r.date}</p>
+              <p className="text-textDark">{r.summary}</p>
+              <Link
+                to={`/reports/${r.id}`}
+                className="inline-block mt-4 text-sm font-medium text-brandBlue hover:underline"
+              >
+                Read more →
+              </Link>
+            </article>
+          ))}
+        </div>
       </div>
     </div>
   );
-};
-
-export default Reports;
+}

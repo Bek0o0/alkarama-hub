@@ -27,18 +27,52 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
-    if (!email) return;
-
-    fetch(`http://localhost:5000/users?email=${email}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.length > 0) {
-          setUser(data[0]);
-        }
-      });
-
+    if (email) {
+      fetch(`http://localhost:5000/users?email=${email}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) setUser(data[0]);
+        });
+    }
     fetchProject();
   }, [id]);
+
+  // NEW: register "I'm Interested" without touching donation flow
+  const handleVolunteerInterest = async () => {
+    const email = localStorage.getItem("userEmail");
+    if (!email) {
+      alert("Please login first to register your interest.");
+      navigate("/login");
+      return;
+    }
+    try {
+      const name =
+        localStorage.getItem("userName") ||
+        localStorage.getItem("fullName") ||
+        (user && (user.fullName || user.email)) ||
+        "N/A";
+
+      const payload = {
+        id: Date.now().toString(),
+        projectId: id,
+        projectTitle: project?.title || "",
+        userEmail: email,
+        userName: name,
+        timestamp: new Date().toISOString(),
+      };
+
+      await fetch("http://localhost:5000/interests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      alert("Thanks! Your interest was recorded for admin review.");
+    } catch (e) {
+      console.error("Volunteer interest failed:", e);
+      alert("Could not submit interest. Please try again.");
+    }
+  };
 
   const handleDonate = async () => {
     if (!user) {
@@ -68,7 +102,7 @@ export default function ProjectDetail() {
         body: JSON.stringify({ donated: updatedAmount }),
       });
 
-      // Save donation record
+      // Save donation record (demo only)
       const donation = {
         id: Date.now().toString(),
         projectId: id,
@@ -123,7 +157,7 @@ export default function ProjectDetail() {
       case "mbook":
         return (
           <div className="bg-blue-50 border p-4 rounded text-sm">
-            <p><strong>Transfer via M-BOK (Bank of Khartoum)</strong></p>
+            <p><strong>Transfer via M‑BOK (Bank of Khartoum)</strong></p>
             <p>Account Name: <strong>Alkarama Hub</strong></p>
             <p>Account Number: <strong>1234-5678-9012</strong></p>
             <p>Bank: <strong>Bank of Khartoum</strong></p>
@@ -136,7 +170,7 @@ export default function ProjectDetail() {
             <p><strong>Transfer via Fawry Bank</strong></p>
             <p>Account Name: <strong>Alkarama Hub</strong></p>
             <p>Account Number: <strong>9876-5432-1098</strong></p>
-            <p>Bank: <strong>Fawry (فوري)</strong></p>
+            <p>Bank: <strong>Fawry</strong></p>
             <p className="mt-2 italic text-gray-600">Please upload the invoice after completing the transfer.</p>
           </div>
         );
@@ -154,23 +188,32 @@ export default function ProjectDetail() {
 
   return (
     <div className="max-w-3xl mx-auto py-20 px-4">
-      <div className="bg-white/90 shadow-xl rounded-xl p-10 space-y-6">
-        <h1 className="text-3xl font-extrabold text-primary">{title}</h1>
+      <div className="bg-white/90 shadow-soft rounded-xl p-10 space-y-6">
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
+          <h1 className="text-3xl font-extrabold text-brandNavy">{title}</h1>
+        </div>
+
         <p className="text-textDark text-lg">{summary}</p>
 
         <div className="bg-gray-100 rounded p-4">
           <p><strong>Status:</strong> {status}</p>
           <p><strong>Estimated Cost:</strong> ${cost.toLocaleString()}</p>
           <p><strong>Donated:</strong> ${donated.toLocaleString()}</p>
-          <div className="w-full bg-gray-300 h-4 rounded mt-2">
-            <div className="bg-green-500 h-full rounded" style={{ width: `${progress}%` }} />
+          <div className="w-full bg-gray-300 h-2 rounded mt-2">
+            <div className="bg-green-600 h-2 rounded" style={{ width: `${progress}%` }} />
           </div>
           <p className="italic text-sm mt-1">${remaining.toLocaleString()} still needed</p>
         </div>
 
-        {/* Donation Form */}
+        {/* New: Volunteer interest button (separate from donation) */}
+        <button onClick={handleVolunteerInterest} className="btn-secondary w-full">
+          I’m Interested to Volunteer
+        </button>
+
+        {/* Donation Form (unchanged logic) */}
         <div className="mt-6 space-y-4">
-          <label className="block font-medium">Donation Amount (USD)</label>
+          <label className="label">Donation Amount (USD)</label>
           <input
             type="number"
             min="1"
@@ -180,20 +223,20 @@ export default function ProjectDetail() {
             placeholder="Enter amount"
           />
 
-          <label className="block font-medium">Payment Method</label>
+          <label className="label">Payment Method</label>
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
             className="input w-full"
           >
-            <option value="mbook">Bank of Khartoum (M-BOK)</option>
-            <option value="fawry">Fawry (فوري)</option>
+            <option value="mbook">Bank of Khartoum (M‑BOK)</option>
+            <option value="fawry">Fawry</option>
             <option value="cash">Cash / Collection Point</option>
           </select>
 
           {renderBankDetails()}
 
-          <label className="block font-medium mt-4">Upload Payment Invoice</label>
+          <label className="label mt-4">Upload Payment Invoice</label>
           <input
             type="file"
             accept="image/*,.pdf"
@@ -201,10 +244,7 @@ export default function ProjectDetail() {
             className="input w-full"
           />
 
-          <button
-            onClick={handleDonate}
-            className="btn-primary w-full"
-          >
+          <button onClick={handleDonate} className="btn-primary w-full">
             Submit Donation
           </button>
         </div>

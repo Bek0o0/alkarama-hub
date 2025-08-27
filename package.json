@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "lucide-react": "^0.525.0"
+  },
+  "devDependencies": {
+    "html-webpack-plugin": "^5.6.4"
   }
 }
