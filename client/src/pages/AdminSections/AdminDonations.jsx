@@ -1,55 +1,132 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const AdminDonations = () => {
+  const { t } = useTranslation();
   const [donations, setDonations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  const [usersByEmail, setUsersByEmail] = useState({});
 
   useEffect(() => {
-    fetch("http://localhost:5000/donations")
-      .then((res) => res.json())
-      .then((data) => setDonations(data.reverse()))
-      .catch((err) => {
-        console.error("Failed to load donations:", err);
-      });
+    fetchDonations();
+    fetchUsersLookup();
   }, []);
 
-  return (
-    <div className="overflow-x-auto">
-      <h2 className="text-2xl font-semibold mb-6 text-textDark text-center">
-        Donation History
-      </h2>
+  const fetchUsersLookup = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/users");
+      const list = await res.json();
+      const map = {};
+      (Array.isArray(list) ? list : []).forEach((u) => {
+        if (u?.email) map[u.email] = u;
+      });
+      setUsersByEmail(map);
+    } catch {
+      setUsersByEmail({});
+    }
+  };
 
-      {donations.length === 0 ? (
-        <p className="text-center text-gray-500 italic">No donations recorded yet.</p>
-      ) : (
-        <table className="min-w-full text-sm border">
-          <thead className="bg-gray-100 text-left text-sm font-semibold text-gray-700">
-            <tr>
-              <th className="py-3 px-4">Project ID</th>
-              <th className="py-3 px-4">Donor Name</th>
-              <th className="py-3 px-4">Email</th>
-              <th className="py-3 px-4">DOB</th>
-              <th className="py-3 px-4">Amount</th>
-              <th className="py-3 px-4">Method</th>
-              <th className="py-3 px-4">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {donations.map((donation) => (
-              <tr key={donation.id} className="border-b hover:bg-gray-50">
-                <td className="py-2 px-4">{donation.projectId}</td>
-                <td className="py-2 px-4">{donation.donorName || "N/A"}</td>
-                <td className="py-2 px-4">{donation.donorEmail}</td>
-                <td className="py-2 px-4">{donation.donorDOB}</td>
-                <td className="py-2 px-4">${donation.amount}</td>
-                <td className="py-2 px-4">{donation.method}</td>
-                <td className="py-2 px-4">
-                  {new Date(donation.date).toLocaleString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+  const fetchDonations = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:5000/donations");
+      const data = await res.json();
+      setDonations(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to load donations:", err);
+      setDonations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filtered = donations.filter((d) => {
+    if (search.trim().length === 0) return true;
+    const q = search.toLowerCase();
+    return (
+      (d.donorName || "").toLowerCase().includes(q) ||
+      (d.donorEmail || "").toLowerCase().includes(q) ||
+      (d.projectId || "").toLowerCase().includes(q)
+    );
+  });
+
+  const DonorCell = ({ email, name }) => {
+    const u = email ? usersByEmail[email] : null;
+    if (!u) return <span className="font-semibold text-brandNavy">{name || "—"}</span>;
+    return (
+      <Link className="font-semibold text-brandBlue hover:underline" to={`/admin/user/${u.id}`}>
+        {name || u.fullName || email}
+      </Link>
+    );
+  };
+
+  const EmailCell = ({ email }) => {
+    const u = email ? usersByEmail[email] : null;
+    if (!email) return <>—</>;
+    if (!u) return <>{email}</>;
+    return <Link className="text-brandBlue hover:underline" to={`/admin/user/${u.id}`}>{email}</Link>;
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto py-12 px-4">
+      <div className="bg-white/90 shadow-soft rounded-2xl p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
+          <h1 className="text-3xl font-extrabold text-brandNavy">{t("admin.donations.title")}</h1>
+        </div>
+
+        <div className="flex justify-between items-center mb-4">
+          <input
+            className="input md:w-1/2"
+            placeholder={t("admin.donations.searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button onClick={() => setSearch("")} className="btn-outline">
+            {t("common.clear")}
+          </button>
+        </div>
+
+        {loading ? (
+          <p className="text-gray-600 italic">{t("common.loading")}</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-gray-500 italic">{t("admin.donations.empty")}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th>{t("admin.donations.th.donor")}</th>
+                  <th>{t("admin.donations.th.email")}</th>
+                  <th>{t("admin.donations.th.dob")}</th>
+                  <th>{t("admin.donations.th.amount")}</th>
+                  <th>{t("admin.donations.th.method")}</th>
+                  <th>{t("admin.donations.th.invoice")}</th>
+                  <th>{t("admin.donations.th.project")}</th>
+                  <th>{t("admin.donations.th.date")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((d) => (
+                  <tr key={d.id} className="hover:bg-gray-50">
+                    <td><DonorCell email={d.donorEmail} name={d.donorName} /></td>
+                    <td><EmailCell email={d.donorEmail} /></td>
+                    <td>{d.donorDob || d.donorDOB || "—"}</td>
+                    <td>${(d.amount || 0).toLocaleString()}</td>
+                    <td>{d.method || "—"}</td>
+                    <td>{d.invoice || "—"}</td>
+                    <td>{d.projectId || "—"}</td>
+                    <td>{d.timestamp ? new Date(d.timestamp).toLocaleDateString() : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

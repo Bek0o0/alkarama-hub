@@ -1,4 +1,3 @@
-// Fake auth service
 export const login = (role) => {
   localStorage.setItem("userRole", role);
 };

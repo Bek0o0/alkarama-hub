@@ -1,179 +1,345 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { getLocalized } from "../../utils/i18nContent";
 
-const AdminProjects = () => {
-  const [projects, setProjects] = useState([]);
-  const [form, setForm] = useState({
-    id: "",
-    title: "",
-    summary: "",
-    cost: "",
-    status: "Planned",
-    donated: 0,
+/** Convert a File to a Base64 data URL (for quick demo storage in JSON server) */
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
-  const [isEditing, setIsEditing] = useState(false);
+}
+
+export default function AdminProjects() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === "rtl";
+
+  // list + ui
+  const [projects, setProjects] = useState([]);
+  const [search, setSearch] = useState("");
+
+  // new project form
+  const [title, setTitle] = useState("");
+  const [titleAr, setTitleAr] = useState("");
+  const [summary, setSummary] = useState("");
+  const [summaryAr, setSummaryAr] = useState("");
+  const [cost, setCost] = useState("");
+  const [tags, setTags] = useState("");
+  const [status, setStatus] = useState("Planned");
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = () =>
+    fetch("http://localhost:5000/projects")
+      .then((r) => r.json())
+      .then((d) => setProjects(d || []))
+      .catch(() => setProjects([]));
 
   useEffect(() => {
-    fetchProjects();
+    load();
   }, []);
 
-  const fetchProjects = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/projects");
-      const data = await res.json();
-      setProjects(data);
-    } catch (err) {
-      console.error("Failed to load projects:", err);
+  const clearForm = () => {
+    setTitle("");
+    setTitleAr("");
+    setSummary("");
+    setSummaryAr("");
+    setCost("");
+    setTags("");
+    setStatus("Planned");
+    setImageFile(null);
+    setImagePreview("");
+  };
+
+  const handleImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setImageFile(null);
+      setImagePreview("");
+      return;
     }
+    setImageFile(file);
+    const b64 = await toBase64(file);
+    setImagePreview(b64);
   };
 
-  const generateId = () => {
-    return Math.random().toString(36).substr(2, 6);
-  };
+  const addProject = async () => {
+    if (!title.trim() && !titleAr.trim()) {
+      alert(t("admin.common.errorAdding"));
+      return;
+    }
+    try {
+      setBusy(true);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const updatedProject = {
-      ...form,
-      cost: parseFloat(form.cost),
-      donated: parseFloat(form.donated) || 0,
-    };
-
-    if (isEditing) {
-      try {
-        await fetch(`http://localhost:5000/projects/${form.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedProject),
-        });
-        resetForm();
-        fetchProjects();
-      } catch (err) {
-        console.error("Failed to update project:", err);
+      let imageDataUrl = imagePreview; // already base64 if selected
+      if (!imageDataUrl && imageFile) {
+        imageDataUrl = await toBase64(imageFile);
       }
-    } else {
-      const newProject = {
-        ...updatedProject,
-        id: generateId(),
+
+      const tagsArr = tags
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+
+      const payload = {
+        id: Date.now().toString(),
+
+        // English + Arabic (keep your base keys)
+        title: title.trim(),
+        title_ar: titleAr.trim(),
+        summary: summary.trim(),
+        summary_ar: summaryAr.trim(),
+
+        // Compatibility: also store *_en so other views using pick(title_en/title_ar) keep working
+        title_en: title.trim(),
+        summary_en: summary.trim(),
+
+        cost: Number(cost || 0),
+        donated: 0,
+        status,
+        tags: tagsArr,
+        image: imageDataUrl || "",
+
+        createdAt: new Date().toISOString(),
       };
-      try {
-        await fetch("http://localhost:5000/projects", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newProject),
-        });
-        resetForm();
-        fetchProjects();
-      } catch (err) {
-        console.error("Failed to add project:", err);
-      }
-    }
-  };
 
-  const resetForm = () => {
-    setForm({
-      id: "",
-      title: "",
-      summary: "",
-      cost: "",
-      status: "Planned",
-      donated: 0,
-    });
-    setIsEditing(false);
-  };
-
-  const handleEdit = (project) => {
-    setForm(project);
-    setIsEditing(true);
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await fetch(`http://localhost:5000/projects/${id}`, {
-        method: "DELETE",
+      await fetch("http://localhost:5000/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-      fetchProjects();
-    } catch (err) {
-      console.error("Failed to delete project:", err);
+
+      clearForm();
+      await load();
+    } catch (e) {
+      console.error(e);
+      alert(t("admin.common.errorAdding"));
+    } finally {
+      setBusy(false);
     }
   };
+
+  const removeProject = async (id) => {
+    if (!window.confirm(t("admin.common.confirmDelete"))) return;
+    try {
+      await fetch(`http://localhost:5000/projects/${id}`, { method: "DELETE" });
+      await load();
+    } catch (e) {
+      console.error(e);
+      alert(t("admin.common.errorDeleting"));
+    }
+  };
+
+  const filtered = projects.filter((p) => {
+    const titleLoc = getLocalized(p, "title", i18n.language).toLowerCase();
+    const summaryLoc = getLocalized(p, "summary", i18n.language).toLowerCase();
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
+    return titleLoc.includes(q) || summaryLoc.includes(q);
+  });
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-textDark mb-6">Rebuilding Projects</h2>
-
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow mb-8 space-y-4">
-        <input
-          type="text"
-          placeholder="Project Title"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          required
-          className="input"
-        />
-        <textarea
-          placeholder="Short Summary"
-          value={form.summary}
-          onChange={(e) => setForm({ ...form, summary: e.target.value })}
-          required
-          className="textarea"
-        />
-        <input
-          type="number"
-          placeholder="Estimated Cost"
-          value={form.cost}
-          onChange={(e) => setForm({ ...form, cost: e.target.value })}
-          required
-          className="input"
-        />
-        <select
-          value={form.status}
-          onChange={(e) => setForm({ ...form, status: e.target.value })}
-          className="input"
-        >
-          <option value="Planned">Planned</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
-        </select>
-        <div className="flex gap-4">
-          <button type="submit" className="btn-primary">
-            {isEditing ? "Update Project" : "Add Project"}
-          </button>
-          {isEditing && (
-            <button type="button" onClick={resetForm} className="btn-secondary">
-              Cancel
+    <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Header / Add Form */}
+      <div className="bg-white/95 rounded-2xl shadow-soft p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-brandNavy">
+            {t("admin.projects.title")}
+          </h2>
+          <div className="flex gap-2 items-center">
+            <button
+              className="btn-secondary"
+              onClick={() => {
+                setSearch("");
+                clearForm();
+              }}
+            >
+              {t("admin.common.clear")}
             </button>
-          )}
-        </div>
-      </form>
-
-      <div className="grid gap-6">
-        {projects.map((project) => (
-          <div key={project.id} className="card border-l-4 border-primary bg-white/95">
-            <h3 className="text-lg font-bold text-primary">{project.title}</h3>
-            <p className="text-gray-700 mt-1">{project.summary}</p>
-            <p className="text-sm text-gray-600">
-              <strong>Status:</strong> {project.status} | <strong>Cost:</strong> ${project.cost?.toLocaleString()} | <strong>Donated:</strong> ${project.donated?.toLocaleString()}
-            </p>
-            <div className="mt-3 flex gap-4">
-              <button
-                onClick={() => handleEdit(project)}
-                className="text-sm text-green-700 hover:underline"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(project.id)}
-                className="text-sm text-red-600 hover:underline"
-              >
-                Delete
-              </button>
-            </div>
+            <input
+              className="input"
+              placeholder={t("admin.projects.searchPh")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-        ))}
+        </div>
+
+        <p className="font-semibold text-brandNavy mb-3">
+          {t("admin.projects.addNew")}
+        </p>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Titles */}
+          <div>
+            <label className="label">{t("admin.projects.titlePh")} (EN)</label>
+            <input
+              className="input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t("admin.projects.titlePh")}
+            />
+          </div>
+          <div>
+            <label className="label">{t("admin.projects.titlePh")} (AR)</label>
+            <input
+              className="input"
+              value={titleAr}
+              onChange={(e) => setTitleAr(e.target.value)}
+              placeholder={t("admin.projects.titlePh")}
+              dir="rtl"
+            />
+          </div>
+
+          {/* Summaries */}
+          <div className="md:col-span-1">
+            <label className="label">{t("admin.projects.colSummary")} (EN)</label>
+            <textarea
+              className="input h-28"
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              placeholder={t("admin.projects.summaryPh")}
+            />
+          </div>
+          <div className="md:col-span-1">
+            <label className="label">{t("admin.projects.colSummary")} (AR)</label>
+            <textarea
+              className="input h-28"
+              value={summaryAr}
+              onChange={(e) => setSummaryAr(e.target.value)}
+              placeholder={t("admin.projects.summaryPh")}
+              dir="rtl"
+            />
+          </div>
+
+          {/* Cost / Status / Tags */}
+          <div>
+            <label className="label">{t("admin.projects.costPh")}</label>
+            <input
+              type="number"
+              className="input"
+              value={cost}
+              onChange={(e) => setCost(e.target.value)}
+              placeholder="100000"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="label">{t("admin.projects.colStatus")}</label>
+            <select
+              className="input"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="Planned">Planned</option>
+              <option value="Active">Active</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="label">{t("admin.projects.tagsPh")}</label>
+            <input
+              className="input"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="construction, software"
+            />
+          </div>
+
+          {/* Image upload */}
+          <div className="md:col-span-2">
+            <label className="label">{t("admin.projects.image") || "Image"}</label>
+            <input type="file" accept="image/*" className="input" onChange={handleImage} />
+            {imagePreview ? (
+              <div className="mt-3">
+                <img
+                  src={imagePreview}
+                  alt="preview"
+                  className="h-32 rounded border object-cover"
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="md:col-span-2">
+            <button className="btn-primary" onClick={addProject} disabled={busy}>
+              {busy ? t("common.loading") : t("admin.projects.addButton")}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Projects table */}
+      <div className="bg-white/95 rounded-2xl shadow-soft p-6 overflow-x-auto">
+        {filtered.length === 0 ? (
+          <p className="text-gray-500 italic">{t("admin.projects.empty")}</p>
+        ) : (
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-gray-500">
+                <th className="py-2 pr-3">{t("admin.projects.colActions")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colInterested")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colTags")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colStatus")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colDonated")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colCost")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colSummary")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colTitle")}</th>
+                <th className="py-2 pr-3">IMG</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((p) => {
+                const titleLoc = getLocalized(p, "title", i18n.language);
+                const summaryLoc = getLocalized(p, "summary", i18n.language);
+                return (
+                  <tr key={p.id} className="border-t align-top">
+                    <td className="py-3 pr-3 whitespace-nowrap">
+                      <button
+                        className="text-red-600 hover:underline"
+                        onClick={() => removeProject(p.id)}
+                      >
+                        {t("common.delete")}
+                      </button>
+                    </td>
+                    <td className="py-3 pr-3">
+                      {Array.isArray(p.interested) ? p.interested.length : p.interested || 0}
+                    </td>
+                    <td className="py-3 pr-3">
+                      {Array.isArray(p.tags) && p.tags.length
+                        ? p.tags.join(", ")
+                        : t("admin.projects.none")}
+                    </td>
+                    <td className="py-3 pr-3">{p.status || t("admin.projects.none")}</td>
+                    <td className="py-3 pr-3">${Number(p.donated || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-3">${Number(p.cost || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-3 max-w-xs">
+                      <div dir="auto" className="line-clamp-3">{summaryLoc}</div>
+                    </td>
+                    <td className="py-3 pr-3 font-semibold text-brandNavy" dir="auto">
+                      {titleLoc}
+                    </td>
+                    <td className="py-3 pr-3">
+                      {p.image ? (
+                        <img
+                          alt="thumb"
+                          src={p.image}
+                          className="h-10 w-16 object-cover rounded border"
+                        />
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
-};
-
-export default AdminProjects;
+}

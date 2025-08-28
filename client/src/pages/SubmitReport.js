@@ -1,136 +1,133 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
-const SubmitReport = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "corruption",
-    location: "",
-    anonymous: false,
-  });
+export default function SubmitReport() {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("corruption");
+  const [location, setLocation] = useState("");
+  const [file, setFile] = useState(null);
+  const [anonymous, setAnonymous] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
+  const { t, i18n } = useTranslation();
+  const dir = i18n.language === "ar" ? "rtl" : "ltr";
 
-  const handleSubmit = async (e) => {
+  const email = useMemo(() => localStorage.getItem("userEmail") || "", []);
+
+  const submit = async (e) => {
     e.preventDefault();
-    const email = localStorage.getItem("userEmail");
-
-    if (!email) {
-      alert("Please log in before submitting a report.");
+    if (!title.trim() || !description.trim()) {
+      alert(t("submit.alertFill"));
       return;
     }
-
-    const newReport = {
-      ...formData,
-      userEmail: formData.anonymous ? "Anonymous" : email,
-      status: "pending",
+    const payload = {
+      id: Math.random().toString(36).slice(2, 6),
+      title: title.trim(),
+      description: description.trim(),
+      category,
+      location: location.trim(),
+      anonymous,
+      userEmail: anonymous ? "Anonymous" : email || "Anonymous",
+      status: "in_review",
       createdAt: new Date().toISOString(),
     };
+    if (file) payload.attachment = file.name;
 
     try {
-      const res = await fetch("http://localhost:5000/reports", {
+      setBusy(true);
+      await fetch("http://localhost:5000/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newReport),
+        body: JSON.stringify(payload),
       });
-
-      if (!res.ok) throw new Error("Failed to submit report.");
-
-      alert("Report submitted successfully!");
-      navigate("/my-reports");
+      alert(t("submit.alertOk"));
+      setTitle(""); setDescription(""); setLocation(""); setFile(null); setAnonymous(false);
     } catch (err) {
       console.error(err);
-      alert("Error submitting report.");
+      alert(t("submit.alertFail"));
+    } finally {
+      setBusy(false);
     }
-
-    setFormData({
-      title: "",
-      description: "",
-      category: "corruption",
-      location: "",
-      anonymous: false,
-    });
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-16 px-4">
-      <div className="bg-white/90 p-8 shadow-xl rounded-xl">
-        <h1 className="text-3xl font-bold text-primary mb-6 text-center">
-          Submit a Civic Report
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="max-w-3xl mx-auto py-16 px-4" style={{ direction: dir }}>
+      <div className="bg-white/95 rounded-2xl shadow-soft border-l-4 border-brandGold p-8">
+        <div className={`flex items-center gap-3 mb-4 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+          <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
+          <h1 className="text-3xl font-extrabold text-brandNavy">{t("submit.title")}</h1>
+        </div>
+
+        <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="label">Report Title</label>
+            <label className="label">{t("submit.reportTitle")}</label>
             <input
-              type="text"
-              name="title"
-              required
-              value={formData.title}
-              onChange={handleChange}
               className="input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t("submit.reportTitlePh")}
             />
           </div>
+
           <div>
-            <label className="label">Description</label>
+            <label className="label">{t("submit.description")}</label>
             <textarea
-              name="description"
-              required
-              value={formData.description}
-              onChange={handleChange}
-              rows={4}
               className="textarea"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t("submit.descriptionPh")}
             />
           </div>
-          <div>
-            <label className="label">Category</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="corruption">Corruption</option>
-              <option value="medical">Medical Emergency</option>
-              <option value="infrastructure">Infrastructure</option>
-              <option value="security">Security Threat</option>
-              <option value="other">Other</option>
-            </select>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="label">{t("submit.category")}</label>
+              <select
+                className="input"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="corruption">{t("submit.cats.corruption")}</option>
+                <option value="security">{t("submit.cats.security")}</option>
+                <option value="medical">{t("submit.cats.medical")}</option>
+                <option value="infrastructure">{t("submit.cats.infrastructure")}</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">{t("submit.locationOpt")}</label>
+              <input
+                className="input"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder={t("submit.locationPh")}
+              />
+            </div>
           </div>
+
           <div>
-            <label className="label">Location (optional)</label>
+            <label className="label">{t("submit.attach")}</label>
             <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
+              type="file"
               className="input"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
             />
           </div>
-          <div className="flex items-center space-x-2">
+
+          <label className={`inline-flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
             <input
               type="checkbox"
-              name="anonymous"
-              checked={formData.anonymous}
-              onChange={handleChange}
-              className="w-5 h-5 text-primary border-gray-300 rounded focus:ring focus:ring-primary"
+              checked={anonymous}
+              onChange={(e) => setAnonymous(e.target.checked)}
             />
-            <label className="text-textDark font-medium">Submit anonymously</label>
-          </div>
-          <button type="submit" className="btn-primary w-full">
-            Submit Report
+            <span className="text-sm text-gray-700">{t("submit.anon")}</span>
+          </label>
+
+          <button className="btn-primary w-full" disabled={busy}>
+            {busy ? t("submit.btnBusy") : t("submit.btn")}
           </button>
         </form>
       </div>
     </div>
   );
-};
-
-export default SubmitReport;
+}

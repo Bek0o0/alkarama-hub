@@ -1,14 +1,25 @@
-// tailwind.config.js
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
-  colors: {
-    primary: "#1f7a1f",     // Sudan Green
-    secondary: "#c0392b",   // Sudan Red
-    gold: "#d4af37",        // Optional accent
-    textDark: "#1a1a1a",
-    },
+      colors: {
+        primary: "#166534",
+        secondary: "#c0392b",
+        gold: "#c9a64a",
+        textDark: "#1a1a1a",
+
+        brandNavy: "#0F2438",
+        brandNavySoft: "#17344d",
+        brandBlue: "#1f4e79",
+        brandGold: "#d4af37",
+        brandIvory: "#f7f7f4",
+      },
+      boxShadow: {
+        soft: "0 10px 30px rgba(16,24,40,.08)",
+      },
+      borderRadius: {
+        xl2: "1.25rem",
+      },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui"],
       },
