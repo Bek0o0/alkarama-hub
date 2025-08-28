@@ -15,22 +15,6 @@ import MyReports from "./pages/MyReports";
 import Admin from "./pages/Admin";
 import PrivacyTerms from "./pages/PrivacyTerms";
 import ForgotPassword from "./pages/ForgotPassword";
-<<<<<<< HEAD
-import Projects from "./pages/Projects";
-import PublicReports from "./pages/PublicReports";
-import PrivacyTerms from "./pages/PrivacyTerms";
-import { getUserRole } from "./utils/auth";
-import bg from "./assets/bg.jpg";
-
-function AppRoutes({ userRole, setUserRole }) {
-  const location = useLocation();
-
-  useEffect(() => {
-    const role = getUserRole();
-    setUserRole(role);
-  }, [location, setUserRole]);
-
-=======
 import AdminUserView from "./pages/AdminSections/AdminUserView";
 
 const RequireAuth = ({ children }) => {
@@ -46,7 +30,6 @@ const RequireAdmin = ({ children }) => {
 export default function App() {
   const userRole = localStorage.getItem("userRole") || "";
 
->>>>>>> dev
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar userRole={userRole} />
@@ -55,7 +38,6 @@ export default function App() {
           {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
-          <Route path="/privacy" element={<PrivacyTerms />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
           <Route path="/public-reports" element={<PublicReports />} />
@@ -81,30 +63,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-<<<<<<< HEAD
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/public-reports" element={<PublicReports />} />
-        </Routes>
-      </main>
-      <Footer />
-    </>
-  );
-}
-
-function App() {
-  const [userRole, setUserRole] = useState(null);
-
-  return (
-    <div
-      className="min-h-screen bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: `url(${bg})` }}
-    >
-      <div className="min-h-screen backdrop-blur-sm bg-white/80">
-        <Router>
-          <AppRoutes userRole={userRole} setUserRole={setUserRole} />
-        </Router>
-      </div>
-=======
           <Route
             path="/my-reports"
             element={
@@ -145,7 +103,6 @@ function App() {
         </Routes>
       </main>
       <Footer />
->>>>>>> dev
     </div>
   );
 }

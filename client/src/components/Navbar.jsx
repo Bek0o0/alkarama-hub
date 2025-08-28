@@ -33,20 +33,11 @@ const Navbar = ({ userRole }) => {
           {t("brand")}
         </Link>
 
-<<<<<<< HEAD
-        <ul className="flex flex-wrap items-center space-x-4 text-sm font-medium">
-          <li><Link to="/" className="text-textDark hover:text-primary">Home</Link></li>
-          <li><Link to="/about" className="text-textDark hover:text-primary">About</Link></li>
-          <li><Link to="/projects" className="text-textDark hover:text-primary">Projects</Link></li>
-          <li><Link to="/public-reports" className="text-textDark hover:text-primary">Public Reports</Link></li>
-          <li><Link to="/privacy" className="text-textDark hover:text-primary">Privacy & Terms</Link></li>
-=======
         <ul
           className="flex flex-wrap items-center text-sm font-medium gap-4"
           style={{ direction: dir }}
         >
           <li><Link to="/" className="text-gray-700 hover:text-brandNavy">{t("nav.home")}</Link></li>
->>>>>>> dev
 
           {/* About */}
           {!hideProjectLinksOnHome && (
@@ -85,13 +76,8 @@ const Navbar = ({ userRole }) => {
 
           {userRole && (
             <li>
-<<<<<<< HEAD
-              <button onClick={handleLogout} className="text-secondary hover:underline transition">
-                Logout
-=======
               <button onClick={handleLogout} className="text-brandGold hover:underline transition">
                 {t("nav.logout")}
->>>>>>> dev
               </button>
             </li>
           )}
