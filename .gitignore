@@ -30,3 +30,8 @@ server/node_modules/
 # builds
 dist/
 build/
+
+# deps
+node_modules/
+client/node_modules/
+server/node_modules/
