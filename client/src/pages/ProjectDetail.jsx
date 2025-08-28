@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 
 export default function ProjectDetail() {
@@ -18,16 +18,19 @@ export default function ProjectDetail() {
   const role = useMemo(() => localStorage.getItem("userRole"), []);
   const email = useMemo(() => localStorage.getItem("userEmail"), []);
 
-  // ✅ same localization helper you already used
-  const pick = (obj, baseKey) => {
-    const lang = i18n.language || "en";
-    const ar = obj[`${baseKey}_ar`];
-    const en = obj[`${baseKey}_en`];
-    if (lang === "ar") return ar || obj[baseKey] || en || "";
-    return en || obj[baseKey] || ar || "";
-  };
+  const pick = useCallback(
+    (obj, baseKey) => {
+      const lang = i18n.language || "en";
+      const ar = obj[`${baseKey}_ar`];
+      const en = obj[`${baseKey}_en`];
+      if (lang === "ar") return ar || obj[baseKey] || en || "";
+      return en || obj[baseKey] || ar || "";
+    },
+    [i18n.language]
+  );
 
-  const fetchProject = () => {
+  const fetchProject = useCallback(() => {
+    setLoading(true);
     fetch(`http://localhost:5000/projects/${id}`)
       .then((res) => res.json())
       .then((data) => {
@@ -39,7 +42,7 @@ export default function ProjectDetail() {
         setProject(null);
         setLoading(false);
       });
-  };
+  }, [id]);
 
   useEffect(() => {
     const e = localStorage.getItem("userEmail");
@@ -50,8 +53,11 @@ export default function ProjectDetail() {
           if (Array.isArray(data) && data.length > 0) setUser(data[0]);
         });
     }
+  }, []);
+
+  useEffect(() => {
     fetchProject();
-  }, [id]);
+  }, [fetchProject]);
 
   const handleDonate = async () => {
     if (!user) {
@@ -152,15 +158,9 @@ export default function ProjectDetail() {
     );
   }
 
-  const { cost = 0, donated = 0, status = "Planned" } = project;
-
-  // ✅ localized fields
+  const { cost = 0, donated = 0, status = "Planned", imageUrl } = project;
   const title = pick(project, "title");
   const summary = pick(project, "summary");
-
-  // ✅ prefer base64 `image`, then `imageUrl`
-  const cover = project.image || project.imageUrl || "";
-
   const remaining = Math.max(cost - donated, 0);
   const progress = cost ? Math.min((donated / cost) * 100, 100) : 0;
 
@@ -201,21 +201,16 @@ export default function ProjectDetail() {
   return (
     <div className="max-w-3xl mx-auto py-20 px-4" dir={isRTL ? "rtl" : "ltr"}>
       <div className="bg-white/90 shadow-soft rounded-xl p-10 space-y-6">
-        {/* ✅ optional cover */}
-        {cover ? (
-          <img src={cover} alt="" className="w-full h-48 object-cover rounded" />
-        ) : null}
+        {imageUrl && (
+          <img src={imageUrl} alt="" className="w-full h-48 object-cover rounded" />
+        )}
 
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
-          <h1 className="text-3xl font-extrabold text-brandNavy" dir="auto">
-            {title}
-          </h1>
+          <h1 className="text-3xl font-extrabold text-brandNavy">{title}</h1>
         </div>
 
-        <p className="text-textDark text-lg" dir="auto">
-          {summary}
-        </p>
+        <p className="text-textDark text-lg">{summary}</p>
 
         <div className="bg-gray-100 rounded p-4">
           <p><strong>{t("projectDetail.status")} </strong>{status}</p>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 
 export default function AdminMatching() {
@@ -25,27 +25,31 @@ export default function AdminMatching() {
       });
   }, []);
 
-  const pick = (obj, baseKey) => {
-    const lang = i18n.language || "en";
-    const ar = obj[`${baseKey}_ar`];
-    const en = obj[`${baseKey}_en`];
-    if (lang === "ar") return ar || obj[baseKey] || en || "";
-    return en || obj[baseKey] || ar || "";
-  };
+  const pick = useCallback(
+    (obj, baseKey) => {
+      const lang = i18n.language || "en";
+      const ar = obj[`${baseKey}_ar`];
+      const en = obj[`${baseKey}_en`];
+      if (lang === "ar") return ar || obj[baseKey] || en || "";
+      return en || obj[baseKey] || ar || "";
+    },
+    [i18n.language]
+  );
 
-  // --- NEW: tiny Arabic/English normalization + synonym expansion ----
-  const normalize = (s) =>
-    String(s || "")
-      .toLowerCase()
-      .replace(/[اأإآ]/g, "ا")
-      .replace(/ة/g, "ه")
-      .replace(/ى/g, "ي")
-      .replace(/ؤ|ئ/g, "ء")
-      .replace(/[^\p{L}\p{N}\s,]+/gu, " ")
-      .trim();
+  // --- Arabic/English normalization + synonym expansion ----------------
+  const normalize = useCallback(
+    (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/[اأإآ]/g, "ا")
+        .replace(/ة/g, "ه")
+        .replace(/ى/g, "ي")
+        .replace(/ؤ|ئ/g, "ء")
+        .replace(/[^\p{L}\p{N}\s,]+/gu, " ")
+        .trim(),
+    []
+  );
 
-  // Canonical vocabulary: each key is the canonical token.
-  // Put the most common English key and list Arabic/English synonyms.
   const CANON = {
     construction: ["construction", "انشاء", "إنشاء", "بناء", "اعمار", "إعمار", "تشييد"],
     engineering: ["engineering", "هندسه", "هندسة"],
@@ -63,77 +67,79 @@ export default function AdminMatching() {
     security: ["security", "امن", "أمن"],
   };
 
-  // Build a reverse map for fast lookup: token -> canonical
-  const REVERSE = (() => {
+  const REVERSE = useMemo(() => {
     const map = new Map();
     for (const [canon, arr] of Object.entries(CANON)) {
       for (const term of arr) map.set(normalize(term), canon);
-      // include the canon itself
       map.set(normalize(canon), canon);
     }
     return map;
-  })();
+  }, [normalize]);
 
-  const toCanonicalTokens = (source) => {
-    const toks = normalize(source)
-      .split(/[\s,]+/)
-      .filter(Boolean);
-    const out = [];
-    for (const tok of toks) {
-      out.push(REVERSE.get(tok) || tok); // fall back to raw token if unknown
-    }
-    return out;
-  };
-  // ------------------------------------------------------------------
+  const toCanonicalTokens = useCallback(
+    (source) => {
+      const toks = normalize(source)
+        .split(/[\s,]+/)
+        .filter(Boolean);
+      const out = [];
+      for (const tok of toks) {
+        out.push(REVERSE.get(tok) || tok);
+      }
+      return out;
+    },
+    [normalize, REVERSE]
+  );
+  // --------------------------------------------------------------------
 
-  // very lightweight overlap score with canonical tokens (AR/EN tolerant)
-  const score = (project, pro) => {
-    const pTags = Array.isArray(project.tags)
-      ? project.tags
-      : String(project.tags || "")
-          .split(",")
-          .map((x) => x.trim())
-          .filter(Boolean);
+  const score = useCallback(
+    (project, pro) => {
+      const pTags = Array.isArray(project.tags)
+        ? project.tags
+        : String(project.tags || "")
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean);
 
-    const projectText =
-      [pick(project, "title"), pick(project, "summary")].join(" ");
+      const projectText = [pick(project, "title"), pick(project, "summary")].join(" ");
 
-    const pCanon = new Set([
-      ...pTags.flatMap((x) => toCanonicalTokens(x)),
-      ...toCanonicalTokens(projectText),
-    ]);
+      const pCanon = new Set([
+        ...pTags.flatMap((x) => toCanonicalTokens(x)),
+        ...toCanonicalTokens(projectText),
+      ]);
 
-    const proText = [
-      pro.profession || pro.profile?.profession || "",
-      pro.expertise || pro.profile?.expertise || "",
-    ].join(",");
+      const proText = [
+        pro.profession || pro.profile?.profession || "",
+        pro.expertise || pro.profile?.expertise || "",
+      ].join(",");
 
-    const proCanon = toCanonicalTokens(proText);
+      const proCanon = toCanonicalTokens(proText);
 
-    let s = 0;
-    for (const tok of proCanon) if (pCanon.has(tok)) s++;
-    return s;
-  };
+      let s = 0;
+      for (const tok of proCanon) if (pCanon.has(tok)) s++;
+      return s;
+    },
+    [pick, toCanonicalTokens]
+  );
 
   const filtered = useMemo(() => {
     const f = normalize(filter || "");
+    const min = Number(minScore) || 0;
+
     return projects
       .filter((p) => {
         const hay = normalize(
-          [pick(p, "title"), pick(p, "summary"), (p.tags || []).join(",")].join(
-            " "
-          )
+          [pick(p, "title"), pick(p, "summary"), (p.tags || []).join(",")].join(" ")
         );
         return !f || hay.includes(f);
       })
       .map((p) => {
         const matches = pros
           .map((u) => ({ u, s: score(p, u) }))
-          .filter((m) => m.s >= Number(minScore))
+          .filter((m) => m.s >= min)
           .sort((a, b) => b.s - a.s);
         return { p, matches };
       });
-  }, [projects, pros, filter, minScore, i18n.language]);
+  }, [projects, pros, filter, minScore, pick, score, normalize]);
 
   return (
     <div className="space-y-6" dir={dir}>
@@ -150,7 +156,7 @@ export default function AdminMatching() {
           type="number"
           min={0}
           value={minScore}
-          onChange={(e) => setMinScore(e.target.value)}
+          onChange={(e) => setMinScore(Number(e.target.value) || 0)}
         />
       </div>
 
@@ -173,9 +179,15 @@ export default function AdminMatching() {
                   <thead className="text-gray-500">
                     <tr>
                       <th className="text-start p-2">{t("admin.matching.th.professional")}</th>
-                      <th className="text-start p-2 hidden md:table-cell">{t("admin.matching.th.email")}</th>
-                      <th className="text-start p-2 hidden md:table-cell">{t("admin.matching.th.profession")}</th>
-                      <th className="text-start p-2 hidden md:table-cell">{t("admin.matching.th.expertise")}</th>
+                      <th className="text-start p-2 hidden md:table-cell">
+                        {t("admin.matching.th.email")}
+                      </th>
+                      <th className="text-start p-2 hidden md:table-cell">
+                        {t("admin.matching.th.profession")}
+                      </th>
+                      <th className="text-start p-2 hidden md:table-cell">
+                        {t("admin.matching.th.expertise")}
+                      </th>
                       <th className="text-start p-2">{t("admin.matching.th.score")}</th>
                     </tr>
                   </thead>

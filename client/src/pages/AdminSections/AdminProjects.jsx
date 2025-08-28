@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { getLocalized } from "../../utils/i18nContent";
 
@@ -32,15 +32,16 @@ export default function AdminProjects() {
   const [imagePreview, setImagePreview] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const load = () =>
-    fetch("http://localhost:5000/projects")
+  const load = useCallback(() => {
+    return fetch("http://localhost:5000/projects")
       .then((r) => r.json())
       .then((d) => setProjects(d || []))
       .catch(() => setProjects([]));
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const clearForm = () => {
     setTitle("");
@@ -79,30 +80,20 @@ export default function AdminProjects() {
         imageDataUrl = await toBase64(imageFile);
       }
 
-      const tagsArr = tags
-        .split(",")
-        .map((x) => x.trim())
-        .filter(Boolean);
-
       const payload = {
         id: Date.now().toString(),
-
-        // English + Arabic (keep your base keys)
-        title: title.trim(),
-        title_ar: titleAr.trim(),
-        summary: summary.trim(),
-        summary_ar: summaryAr.trim(),
-
-        // Compatibility: also store *_en so other views using pick(title_en/title_ar) keep working
-        title_en: title.trim(),
-        summary_en: summary.trim(),
-
+        title: title.trim(), // English (legacy key)
+        title_ar: titleAr.trim(), // Arabic
+        summary: summary.trim(), // English (legacy key)
+        summary_ar: summaryAr.trim(), // Arabic
         cost: Number(cost || 0),
         donated: 0,
         status,
-        tags: tagsArr,
-        image: imageDataUrl || "",
-
+        tags: tags
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean),
+        image: imageDataUrl || "", // Optional image (base64)
         createdAt: new Date().toISOString(),
       };
 
@@ -251,7 +242,12 @@ export default function AdminProjects() {
 
           {/* Image upload */}
           <div className="md:col-span-2">
-            <label className="label">{t("admin.projects.image") || "Image"}</label>
+            <label className="label">
+              {t("projectDetail.uploadInvoice").replace(
+                /Invoice/i,
+                t("admin.projects.image") || "Image"
+              )}
+            </label>
             <input type="file" accept="image/*" className="input" onChange={handleImage} />
             {imagePreview ? (
               <div className="mt-3">
@@ -317,7 +313,9 @@ export default function AdminProjects() {
                     <td className="py-3 pr-3">${Number(p.donated || 0).toLocaleString()}</td>
                     <td className="py-3 pr-3">${Number(p.cost || 0).toLocaleString()}</td>
                     <td className="py-3 pr-3 max-w-xs">
-                      <div dir="auto" className="line-clamp-3">{summaryLoc}</div>
+                      <div dir="auto" className="line-clamp-3">
+                        {summaryLoc}
+                      </div>
                     </td>
                     <td className="py-3 pr-3 font-semibold text-brandNavy" dir="auto">
                       {titleLoc}
