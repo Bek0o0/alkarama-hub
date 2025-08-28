@@ -1,41 +1,45 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import StatusBadge from "../../components/StatusBadge";
+import { useTranslation } from "react-i18next";
 
 const STATUS_OPTIONS = ["Pending", "Resolved", "Declined", "Public"];
 
 const AdminReports = () => {
+  const { t } = useTranslation();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
-  // email -> { id, fullName }
+
+  // email -> user (for clickable links)
   const [usersByEmail, setUsersByEmail] = useState({});
 
   useEffect(() => {
-    fetchAll();
+    fetchReports();
+    fetchUsersLookup();
   }, []);
 
-  const fetchAll = async () => {
+  const fetchUsersLookup = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/users");
+      const list = await res.json();
+      const map = {};
+      (Array.isArray(list) ? list : []).forEach((u) => {
+        if (u?.email) map[u.email] = u;
+      });
+      setUsersByEmail(map);
+    } catch {
+      setUsersByEmail({});
+    }
+  };
+
+  const fetchReports = async () => {
     try {
       setLoading(true);
-      const [r1, r2] = await Promise.all([
-        fetch("http://localhost:5000/reports"),
-        fetch("http://localhost:5000/users"),
-      ]);
-      const data = await r1.json();
+      const res = await fetch("http://localhost:5000/reports");
+      const data = await res.json();
       setReports(Array.isArray(data) ? data : []);
-
-      const users = await r2.json();
-      if (Array.isArray(users)) {
-        const m = {};
-        for (const u of users) {
-          if (u?.email) m[u.email] = { id: u.id, fullName: u.fullName || "" };
-        }
-        setUsersByEmail(m);
-      } else {
-        setUsersByEmail({});
-      }
     } catch (err) {
       console.error("Failed to load reports:", err);
       setReports([]);
@@ -51,10 +55,10 @@ const AdminReports = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      fetchAll();
+      fetchReports();
     } catch (err) {
       console.error("Failed to update status:", err);
-      alert("Error updating status.");
+      alert(t("common.errorUpdating"));
     }
   };
 
@@ -68,20 +72,11 @@ const AdminReports = () => {
     return matchesStatus && matchesSearch;
   });
 
-  const reporterLink = (email) => {
-    if (!email || email === "Anonymous") return "Anonymous";
-    const info = usersByEmail[email];
-    const text = info?.fullName || email;
-    const key = info?.id ? info.id : email;
-    return (
-      <Link
-        to={`/admin/users/${encodeURIComponent(key)}`}
-        className="text-brandBlue hover:underline"
-        title="View user profile"
-      >
-        {text}
-      </Link>
-    );
+  const ByLine = ({ email }) => {
+    if (!email) return <>{t("admin.common.anonymous")}</>;
+    const u = usersByEmail[email];
+    if (!u) return <>{email}</>;
+    return <Link className="text-brandBlue hover:underline" to={`/admin/user/${u.id}`}>{email}</Link>;
   };
 
   return (
@@ -89,7 +84,7 @@ const AdminReports = () => {
       <div className="bg-white/90 shadow-soft rounded-2xl p-8">
         <div className="flex items-center gap-3 mb-6">
           <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
-          <h1 className="text-3xl font-extrabold text-brandNavy">Civic Reports</h1>
+          <h1 className="text-3xl font-extrabold text-brandNavy">{t("admin.reports.title")}</h1>
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-6">
@@ -97,7 +92,7 @@ const AdminReports = () => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title/category…"
+            placeholder={t("admin.reports.searchPlaceholder")}
             className="input md:w-1/2"
           />
           <div className="flex gap-3">
@@ -106,29 +101,23 @@ const AdminReports = () => {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="">All statuses</option>
+              <option value="">{t("admin.reports.allStatuses")}</option>
               {STATUS_OPTIONS.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {t(`admin.reports.status.${s}`, s)}
                 </option>
               ))}
             </select>
-            <button
-              className="btn-outline"
-              onClick={() => {
-                setSearch("");
-                setStatusFilter("");
-              }}
-            >
-              Clear
+            <button className="btn-outline" onClick={() => { setSearch(""); setStatusFilter(""); }}>
+              {t("common.clear")}
             </button>
           </div>
         </div>
 
         {loading ? (
-          <p className="text-gray-600 italic">Loading…</p>
+          <p className="text-gray-600 italic">{t("common.loading")}</p>
         ) : filtered.length === 0 ? (
-          <p className="text-gray-500 italic">No reports match your filters.</p>
+          <p className="text-gray-500 italic">{t("admin.reports.empty")}</p>
         ) : (
           <div className="space-y-6">
             {filtered.map((report) => {
@@ -146,12 +135,12 @@ const AdminReports = () => {
                     <div className="min-w-[240px]">
                       <h3 className="text-lg font-bold text-brandNavy">{report.title}</h3>
                       <p className="text-sm text-gray-600">
-                        <strong>Submitted:</strong> {created} &middot{" "}
-                        <strong>By:</strong> {reporterLink(report.userEmail)}
+                        <strong>{t("admin.reports.submitted")}:</strong> {created} &middot{" "}
+                        <strong>{t("admin.reports.by")}:</strong> <ByLine email={report.userEmail} />
                       </p>
                       <p className="text-sm text-gray-600">
-                        <strong>Category:</strong> {report.category} &middot{" "}
-                        <strong>Location:</strong> {report.location || "N/A"}
+                        <strong>{t("admin.reports.category")}:</strong> {report.category} &middot{" "}
+                        <strong>{t("admin.reports.location")}:</strong> {report.location || "N/A"}
                       </p>
                     </div>
 
@@ -159,7 +148,6 @@ const AdminReports = () => {
                       <div className="mb-2">
                         <StatusBadge value={report.status || "Pending"} />
                       </div>
-
                       <div className="flex gap-2 justify-end">
                         <select
                           className="input w-40"
@@ -168,7 +156,7 @@ const AdminReports = () => {
                         >
                           {STATUS_OPTIONS.map((s) => (
                             <option key={s} value={s}>
-                              {s}
+                              {t(`admin.reports.status.${s}`, s)}
                             </option>
                           ))}
                         </select>
@@ -186,7 +174,7 @@ const AdminReports = () => {
                         rel="noopener noreferrer"
                         className="text-brandBlue hover:underline text-sm"
                       >
-                        View Evidence
+                        {t("admin.reports.viewEvidence")}
                       </a>
                     </div>
                   )}

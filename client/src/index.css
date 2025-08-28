@@ -2,19 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---------- Brand & base ---------- */
 :root{
-  /* remapped primary to embassy navy */
-  --primary: #0F2438;        /* brand navy */
-  --primary-600: #17344d;    /* darker navy hover */
+  --primary: #0F2438;        
+  --primary-600: #17344d;    
 
-  /* legacy vars kept (still used in places) */
   --accent: #16a34a;
-  --gold: #d4af37;           /* embassy gold */
+  --gold: #d4af37;           
   --bg-soft: #f7faf9;
   --text: #1a1a1a;
 
-  /* embassy palette (tokens) */
   --brand-navy: #0F2438;
   --brand-navy-soft: #17344d;
   --brand-blue: #1f4e79;
@@ -36,21 +32,18 @@ body {
   background-position: center;
 }
 
-/* CSS-var helpers (back-compat with old pages) */
 .text-primary { color: var(--primary) !important; }
 .bg-primary   { background-color: var(--primary) !important; }
 .border-primary { border-color: var(--primary) !important; }
 .text-gold    { color: var(--gold) !important; }
 .bg-gold      { background-color: var(--gold) !important; }
 
-/* Embassy helpers */
 .bg-brandNavy { background-color: var(--brand-navy) !important; }
 .bg-brandNavySoft { background-color: var(--brand-navy-soft) !important; }
 .text-brandNavy { color: var(--brand-navy) !important; }
 .text-brandGold { color: var(--brand-gold) !important; }
 .border-brandGold { border-color: var(--brand-gold) !important; }
 
-/* ---------- Layout helpers ---------- */
 .container { @apply max-w-7xl mx-auto; }
 .section   { @apply py-16 px-6; }
 .centered  { @apply flex items-center justify-center; }
@@ -61,7 +54,6 @@ body {
   border-bottom: 2px solid color-mix(in oklab, var(--brand-navy) 25%, transparent);
 }
 
-/* ---------- Surfaces ---------- */
 .card{
   @apply bg-white/90 backdrop-blur rounded-2xl shadow-soft p-6 transition;
 }
@@ -73,7 +65,6 @@ body {
   box-shadow: 0 10px 30px rgb(16 24 40 / 8%);
 }
 
-/* ---------- Buttons ---------- */
 .btn{ @apply inline-flex items-center justify-center gap-2 px-5 py-2 rounded-2xl font-semibold transition active:scale-[.98]; }
 .btn-primary{ @apply btn; background: var(--brand-gold); color: var(--brand-navy); }
 .btn-primary:hover{ filter: brightness(1.05); }
@@ -87,7 +78,6 @@ body {
 .btn-outline:hover{ background: color-mix(in oklab, var(--brand-navy) 8%, transparent); }
 .btn-ghost{ @apply btn text-gray-200/90 hover:bg-white/10; }
 
-/* ---------- Inputs / Forms ---------- */
 .input{
   @apply w-full border border-gray-300 rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brandBlue;
   background: white;
@@ -99,7 +89,6 @@ body {
 .label{ @apply block font-medium text-gray-700 mb-1; }
 .form-hint{ @apply text-xs text-gray-500 mt-1; }
 
-/* ---------- Badges / Chips ---------- */
 .badge{ @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold; }
 .badge-green  { @apply badge bg-green-100 text-green-700; }
 .badge-amber  { @apply badge bg-amber-100 text-amber-700; }
@@ -107,7 +96,6 @@ body {
 .badge-blue   { @apply badge bg-blue-100 text-blue-700; }
 .badge-gray   { @apply badge bg-gray-100 text-gray-700; }
 
-/* ---------- Navigation ---------- */
 .nav-link{ @apply text-sm font-medium text-white/90 hover:text-white transition; }
 .nav-link-active{ color: #fff; position: relative; }
 .nav-link-active::after{
@@ -117,7 +105,6 @@ body {
   border-radius: 9999px;
 }
 
-/* ---------- Tables (admin) ---------- */
 .table{ @apply w-full text-sm; }
 .table thead tr{ @apply border-b; }
 .table th{ @apply text-left py-2 pr-4 font-semibold text-gray-700; }
@@ -125,10 +112,8 @@ body {
 .table tbody tr{ @apply border-b; }
 .table tbody tr:hover{ @apply bg-gray-50; }
 
-/* ---------- Hero/CTA ---------- */
 .hero-title{ @apply text-4xl md:text-5xl font-extrabold; color: var(--brand-navy); letter-spacing: -0.01em; }
 .hero-subtitle{ @apply text-lg md:text-xl text-gray-700; }
 
-/* ---------- Small utilities ---------- */
 .shadow-soft{ box-shadow: 0 10px 30px rgb(16 24 40 / 8%); }
 .bg-soft    { background: var(--bg-soft); }

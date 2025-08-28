@@ -1,7 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function ProjectDetail() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === "rtl";
+
   const { id } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
@@ -13,6 +17,15 @@ export default function ProjectDetail() {
 
   const role = useMemo(() => localStorage.getItem("userRole"), []);
   const email = useMemo(() => localStorage.getItem("userEmail"), []);
+
+  // ✅ same localization helper you already used
+  const pick = (obj, baseKey) => {
+    const lang = i18n.language || "en";
+    const ar = obj[`${baseKey}_ar`];
+    const en = obj[`${baseKey}_en`];
+    if (lang === "ar") return ar || obj[baseKey] || en || "";
+    return en || obj[baseKey] || ar || "";
+  };
 
   const fetchProject = () => {
     fetch(`http://localhost:5000/projects/${id}`)
@@ -42,33 +55,31 @@ export default function ProjectDetail() {
 
   const handleDonate = async () => {
     if (!user) {
-      alert("You must be logged in to donate.");
+      alert(t("projectDetail.alert.mustLoginDonate"));
       navigate("/login");
       return;
     }
 
     const amount = parseFloat(donationAmount);
     if (isNaN(amount) || amount <= 0) {
-      alert("Enter a valid donation amount.");
+      alert(t("projectDetail.alert.enterValidAmount"));
       return;
     }
 
     if (!invoice) {
-      alert("Please upload your payment invoice before submitting.");
+      alert(t("projectDetail.alert.uploadInvoiceFirst"));
       return;
     }
 
     const updatedAmount = (project.donated || 0) + amount;
 
     try {
-      // Update project total
       await fetch(`http://localhost:5000/projects/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ donated: updatedAmount }),
       });
 
-      // Save donation record (demo only)
       const donation = {
         id: Date.now().toString(),
         projectId: id,
@@ -88,13 +99,13 @@ export default function ProjectDetail() {
         body: JSON.stringify(donation),
       });
 
-      alert("Donation submitted successfully!");
+      alert(t("projectDetail.alert.donateOk"));
       setDonationAmount("");
       setInvoice(null);
       fetchProject();
     } catch (err) {
       console.error("Donation failed:", err);
-      alert("Error processing donation.");
+      alert(t("projectDetail.alert.donateFail"));
     }
   };
 
@@ -112,30 +123,44 @@ export default function ProjectDetail() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      alert("Thanks — your interest has been recorded for the admin.");
+      alert(t("projectDetail.alert.interestOk"));
     } catch (e) {
       console.error(e);
-      alert("Could not record your interest.");
+      alert(t("projectDetail.alert.interestFail"));
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600">
-        Loading project...
+      <div
+        className="min-h-screen flex items-center justify-center text-gray-600"
+        dir={isRTL ? "rtl" : "ltr"}
+      >
+        {t("projectDetail.loading")}
       </div>
     );
   }
 
   if (!project) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-600 font-semibold">
-        Project not found.
+      <div
+        className="min-h-screen flex items-center justify-center text-red-600 font-semibold"
+        dir={isRTL ? "rtl" : "ltr"}
+      >
+        {t("projectDetail.notFound")}
       </div>
     );
   }
 
-  const { title, summary, cost = 0, donated = 0, status = "Planned" } = project;
+  const { cost = 0, donated = 0, status = "Planned" } = project;
+
+  // ✅ localized fields
+  const title = pick(project, "title");
+  const summary = pick(project, "summary");
+
+  // ✅ prefer base64 `image`, then `imageUrl`
+  const cover = project.image || project.imageUrl || "";
+
   const remaining = Math.max(cost - donated, 0);
   const progress = cost ? Math.min((donated / cost) * 100, 100) : 0;
 
@@ -144,28 +169,28 @@ export default function ProjectDetail() {
       case "mbook":
         return (
           <div className="bg-blue-50 border p-4 rounded text-sm">
-            <p><strong>Transfer via M-BOK (Bank of Khartoum)</strong></p>
-            <p>Account Name: <strong>Alkarama Hub</strong></p>
-            <p>Account Number: <strong>1234-5678-9012</strong></p>
-            <p>Bank: <strong>Bank of Khartoum</strong></p>
-            <p className="mt-2 italic text-gray-600">Please upload the invoice after completing the transfer.</p>
+            <p><strong>{t("projectDetail.mbok.title")}</strong></p>
+            <p>{t("projectDetail.bank.accountName")} <strong>Alkarama Hub</strong></p>
+            <p>{t("projectDetail.bank.accountNumber")} <strong>1234-5678-9012</strong></p>
+            <p>{t("projectDetail.bank.bank")} <strong>Bank of Khartoum</strong></p>
+            <p className="mt-2 italic text-gray-600">{t("projectDetail.bank.uploadNote")}</p>
           </div>
         );
       case "fawry":
         return (
           <div className="bg-yellow-50 border p-4 rounded text-sm">
-            <p><strong>Transfer via Fawry Bank</strong></p>
-            <p>Account Name: <strong>Alkarama Hub</strong></p>
-            <p>Account Number: <strong>9876-5432-1098</strong></p>
-            <p>Bank: <strong>Fawry</strong></p>
-            <p className="mt-2 italic text-gray-600">Please upload the invoice after completing the transfer.</p>
+            <p><strong>{t("projectDetail.fawry.title")}</strong></p>
+            <p>{t("projectDetail.bank.accountName")} <strong>Alkarama Hub</strong></p>
+            <p>{t("projectDetail.bank.accountNumber")} <strong>9876-5432-1098</strong></p>
+            <p>{t("projectDetail.bank.bank")} <strong>Fawry</strong></p>
+            <p className="mt-2 italic text-gray-600">{t("projectDetail.bank.uploadNote")}</p>
           </div>
         );
       case "cash":
         return (
           <div className="bg-green-50 border p-4 rounded text-sm">
-            <p><strong>Cash Payment via NGO or Government Collection Point</strong></p>
-            <p className="mt-2 italic text-gray-600">Please upload the stamped receipt or invoice you received.</p>
+            <p><strong>{t("projectDetail.cash.title")}</strong></p>
+            <p className="mt-2 italic text-gray-600">{t("projectDetail.cash.note")}</p>
           </div>
         );
       default:
@@ -174,58 +199,70 @@ export default function ProjectDetail() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-20 px-4">
+    <div className="max-w-3xl mx-auto py-20 px-4" dir={isRTL ? "rtl" : "ltr"}>
       <div className="bg-white/90 shadow-soft rounded-xl p-10 space-y-6">
+        {/* ✅ optional cover */}
+        {cover ? (
+          <img src={cover} alt="" className="w-full h-48 object-cover rounded" />
+        ) : null}
+
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
-          <h1 className="text-3xl font-extrabold text-brandNavy">{title}</h1>
+          <h1 className="text-3xl font-extrabold text-brandNavy" dir="auto">
+            {title}
+          </h1>
         </div>
 
-        <p className="text-textDark text-lg">{summary}</p>
+        <p className="text-textDark text-lg" dir="auto">
+          {summary}
+        </p>
 
         <div className="bg-gray-100 rounded p-4">
-          <p><strong>Status:</strong> {status}</p>
-          <p><strong>Estimated Cost:</strong> ${cost.toLocaleString()}</p>
-          <p><strong>Donated:</strong> ${donated.toLocaleString()}</p>
+          <p><strong>{t("projectDetail.status")} </strong>{status}</p>
+          <p><strong>{t("projectDetail.estimatedCost")} </strong>${cost.toLocaleString()}</p>
+          <p><strong>{t("projectDetail.donated")} </strong>${donated.toLocaleString()}</p>
           <div className="w-full bg-gray-300 h-2 rounded mt-2">
             <div className="bg-green-600 h-2 rounded" style={{ width: `${progress}%` }} />
           </div>
-          <p className="italic text-sm mt-1">${remaining.toLocaleString()} still needed</p>
+          <p className="italic text-sm mt-1">
+            {t("projectDetail.stillNeeded", { amount: remaining.toLocaleString() })}
+          </p>
         </div>
 
-        {/* Users only: interest CTA */}
         {role === "user" && (
           <div className="flex gap-3">
-            <button onClick={expressInterest} className="btn-outline">I’m Interested (Volunteer)</button>
+            <button onClick={expressInterest} className="btn-outline">
+              {t("projectDetail.imInterestedVolunteer")}
+            </button>
           </div>
         )}
 
         {/* Donation Form */}
         <div className="mt-6 space-y-4">
-          <label className="label">Donation Amount (USD)</label>
+          <label className="label">{t("projectDetail.donationAmountUSD")}</label>
           <input
             type="number"
             min="1"
             value={donationAmount}
             onChange={(e) => setDonationAmount(e.target.value)}
             className="input w-full"
-            placeholder="Enter amount"
+            placeholder={t("projectDetail.enterAmount")}
           />
 
-          <label className="label">Payment Method</label>
+          <label className="label">{t("projectDetail.paymentMethod")}</label>
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
             className="input w-full"
           >
-            <option value="mbook">Bank of Khartoum (M-BOK)</option>
-            <option value="fawry">Fawry</option>
-            <option value="cash">Cash / Collection Point</option>
+            <option value="mbook">{t("projectDetail.methods.mbok")}</option>
+            <option value="fawry">{t("projectDetail.methods.fawry")}</option>
+            <option value="cash">{t("projectDetail.methods.cash")}</option>
           </select>
 
           {renderBankDetails()}
 
-          <label className="label mt-4">Upload Payment Invoice</label>
+          <label className="label mt-4">{t("projectDetail.uploadInvoice")}</label>
           <input
             type="file"
             accept="image/*,.pdf"
@@ -234,7 +271,7 @@ export default function ProjectDetail() {
           />
 
           <button onClick={handleDonate} className="btn-primary w-full">
-            Submit Donation
+            {t("projectDetail.submitDonation")}
           </button>
         </div>
       </div>

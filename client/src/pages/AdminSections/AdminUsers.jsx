@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const ROLES = ["user", "admin"];
 
 const AdminUsers = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +40,7 @@ const AdminUsers = () => {
       fetchUsers();
     } catch (err) {
       console.error("Failed to update role:", err);
-      alert("Error updating role.");
+      alert(t("admin.common.errorUpdating"));
     }
   };
 
@@ -52,18 +54,18 @@ const AdminUsers = () => {
       fetchUsers();
     } catch (err) {
       console.error("Failed to update verification:", err);
-      alert("Error updating verification.");
+      alert(t("admin.common.errorUpdating"));
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this user?")) return;
+    if (!window.confirm(t("admin.common.confirmDelete"))) return;
     try {
       await fetch(`http://localhost:5000/users/${id}`, { method: "DELETE" });
       fetchUsers();
     } catch (err) {
       console.error("Failed to delete user:", err);
-      alert("Error deleting user.");
+      alert(t("admin.common.errorDeleting"));
     }
   };
 
@@ -86,14 +88,16 @@ const AdminUsers = () => {
       <div className="bg-white/90 shadow-soft rounded-2xl p-8">
         <div className="flex items-center gap-3 mb-6">
           <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
-          <h1 className="text-3xl font-extrabold text-brandNavy">Manage Users</h1>
+          <h1 className="text-3xl font-extrabold text-brandNavy">
+            {t("admin.users.title")}
+          </h1>
         </div>
 
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-6">
           <input
             className="input md:w-1/2"
-            placeholder="Search by name or email…"
+            placeholder={t("admin.users.searchPh")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -103,35 +107,41 @@ const AdminUsers = () => {
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
             >
-              <option value="">All roles</option>
+              <option value="">{t("admin.users.allRoles")}</option>
               {ROLES.map((r) => (
                 <option key={r} value={r}>
                   {r}
                 </option>
               ))}
             </select>
-            <button className="btn-outline" onClick={() => { setSearch(""); setRoleFilter(""); }}>
-              Clear
+            <button
+              className="btn-outline"
+              onClick={() => {
+                setSearch("");
+                setRoleFilter("");
+              }}
+            >
+              {t("admin.common.clear")}
             </button>
           </div>
         </div>
 
         {loading ? (
-          <p className="text-gray-600 italic">Loading users…</p>
+          <p className="text-gray-600 italic">{t("admin.common.loading")}</p>
         ) : filtered.length === 0 ? (
-          <p className="text-gray-500 italic">No users match your filters.</p>
+          <p className="text-gray-500 italic">{t("admin.users.empty")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="table">
               <thead>
                 <tr className="bg-gray-50">
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Verified</th>
-                  <th>Profession</th>
-                  <th>Expertise</th>
-                  <th>Actions</th>
+                  <th>{t("admin.users.colName")}</th>
+                  <th>{t("admin.users.colEmail")}</th>
+                  <th>{t("admin.users.colRole")}</th>
+                  <th>{t("admin.users.colVerified")}</th>
+                  <th>{t("admin.users.colProfession")}</th>
+                  <th>{t("admin.users.colExpertise")}</th>
+                  <th>{t("admin.users.colActions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,7 +152,7 @@ const AdminUsers = () => {
                         <Link
                           to={`/admin/users/${encodeURIComponent(u.id)}`}
                           className="text-brandBlue hover:underline"
-                          title="View user profile"
+                          title={t("admin.userView.title")}
                         >
                           {u.fullName || "—"}
                         </Link>
@@ -151,16 +161,16 @@ const AdminUsers = () => {
                       )}
                     </td>
                     <td>
-                      {u?.email ? (
+                      {u?.id && u?.email ? (
                         <Link
-                          to={`/admin/users/${encodeURIComponent(u.email)}`}
+                          to={`/admin/users/${encodeURIComponent(u.id)}`}
                           className="text-brandBlue hover:underline"
-                          title="View user profile"
+                          title={t("admin.userView.title")}
                         >
                           {u.email}
                         </Link>
                       ) : (
-                        "—"
+                        u.email || "—"
                       )}
                     </td>
                     <td>
@@ -182,26 +192,32 @@ const AdminUsers = () => {
                           type="checkbox"
                           className="w-4 h-4"
                           checked={!!u.verified}
-                          onChange={(e) => handleVerifiedToggle(u.id, e.target.checked)}
+                          onChange={(e) =>
+                            handleVerifiedToggle(u.id, e.target.checked)
+                          }
                         />
-                        <span className="text-sm">{u.verified ? "Yes" : "No"}</span>
+                        <span className="text-sm">
+                          {u.verified ? t("admin.common.yes") : t("admin.common.no")}
+                        </span>
                       </label>
                     </td>
                     <td>{u.profession || "—"}</td>
                     <td>
                       {Array.isArray(u.expertise) && u.expertise.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {u.expertise.map((t) => (
+                          {u.expertise.map((tkn) => (
                             <span
-                              key={t}
+                              key={tkn}
                               className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full"
                             >
-                              {t}
+                              {tkn}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-gray-400 text-xs italic">None</span>
+                        <span className="text-gray-400 text-xs italic">
+                          {t("admin.users.none")}
+                        </span>
                       )}
                     </td>
                     <td>
@@ -209,7 +225,7 @@ const AdminUsers = () => {
                         onClick={() => handleDelete(u.id)}
                         className="text-red-600 hover:underline text-sm"
                       >
-                        Delete
+                        {t("common.delete")}
                       </button>
                     </td>
                   </tr>

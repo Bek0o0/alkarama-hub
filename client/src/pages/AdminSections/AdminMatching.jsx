@@ -1,231 +1,205 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-
-// Try to use your existing matcher, but fall back safely if not found.
-let externalMatcher;
-try {
-  // eslint-disable-next-line global-require, import/no-unresolved
-  externalMatcher = require("../../matching");
-} catch (e) {
-  externalMatcher = null;
-}
-
-// Fallback simple matcher: tags ∩ expertise + profession keyword presence
-function defaultMatch(projects, users) {
-  const norm = (s) => (s || "").toString().toLowerCase();
-  const tokenize = (s) =>
-    norm(s)
-      .split(/[^\p{L}\p{N}]+/u)
-      .filter(Boolean);
-
-  return projects.map((p) => {
-    const pTags = Array.isArray(p.tags) ? p.tags.map(norm) : [];
-    const pTitleTokens = tokenize(p.title);
-    const pSummaryTokens = tokenize(p.summary);
-    const pTokens = new Set([...pTags, ...pTitleTokens, ...pSummaryTokens]);
-
-    const matches = users.map((u) => {
-      const expertiseArr = Array.isArray(u.expertise)
-        ? u.expertise.map(norm)
-        : norm(u.expertise || "").split(",").map((x) => x.trim()).filter(Boolean);
-
-      const profTokens = tokenize(u.profession);
-      let score = 0;
-
-      expertiseArr.forEach((x) => {
-        if (pTokens.has(x)) score += 2;
-      });
-      profTokens.forEach((x) => {
-        if (pTokens.has(x)) score += 1;
-      });
-
-      return { user: u, score };
-    });
-
-    const ranked = matches
-      .filter((m) => m.score > 0)
-      .sort((a, b) => b.score - a.score);
-
-    return { project: p, matches: ranked };
-  });
-}
+import { useTranslation } from "react-i18next";
 
 export default function AdminMatching() {
+  const { t, i18n } = useTranslation();
+  const dir = i18n.dir();
+
   const [projects, setProjects] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [q, setQ] = useState("");
+  const [pros, setPros] = useState([]);
+  const [filter, setFilter] = useState("");
   const [minScore, setMinScore] = useState(1);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const [pRes, uRes] = await Promise.all([
-          fetch("http://localhost:5000/projects"),
-          fetch("http://localhost:5000/users"),
-        ]);
-        const [pData, uData] = await Promise.all([pRes.json(), uRes.json()]);
-        setProjects(Array.isArray(pData) ? pData : []);
-        setUsers(Array.isArray(uData) ? uData : []);
-      } catch (e) {
-        console.error("Matching load failed:", e);
+    Promise.all([
+      fetch("http://localhost:5000/projects").then((r) => r.json()),
+      fetch("http://localhost:5000/users?role=user").then((r) => r.json()),
+    ])
+      .then(([pj, us]) => {
+        setProjects(pj || []);
+        setPros((us || []).filter(Boolean));
+      })
+      .catch(() => {
         setProjects([]);
-        setUsers([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+        setPros([]);
+      });
   }, []);
 
-  const results = useMemo(() => {
-    if (!projects.length || !users.length) return [];
-    let grouped;
+  const pick = (obj, baseKey) => {
+    const lang = i18n.language || "en";
+    const ar = obj[`${baseKey}_ar`];
+    const en = obj[`${baseKey}_en`];
+    if (lang === "ar") return ar || obj[baseKey] || en || "";
+    return en || obj[baseKey] || ar || "";
+  };
 
-    if (externalMatcher && typeof externalMatcher.matchProjectsToProfessionals === "function") {
-      try {
-        grouped = externalMatcher.matchProjectsToProfessionals(projects, users);
-      } catch (e) {
-        console.warn("Falling back to default matcher:", e);
-        grouped = defaultMatch(projects, users);
-      }
-    } else {
-      grouped = defaultMatch(projects, users);
+  // --- NEW: tiny Arabic/English normalization + synonym expansion ----
+  const normalize = (s) =>
+    String(s || "")
+      .toLowerCase()
+      .replace(/[اأإآ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/ى/g, "ي")
+      .replace(/ؤ|ئ/g, "ء")
+      .replace(/[^\p{L}\p{N}\s,]+/gu, " ")
+      .trim();
+
+  // Canonical vocabulary: each key is the canonical token.
+  // Put the most common English key and list Arabic/English synonyms.
+  const CANON = {
+    construction: ["construction", "انشاء", "إنشاء", "بناء", "اعمار", "إعمار", "تشييد"],
+    engineering: ["engineering", "هندسه", "هندسة"],
+    software: ["software", "برمجيات", "برمجه", "برمجة", "تقنيه", "تقنية"],
+    education: ["education", "تعليم", "مدارس", "جامعات", "جامعة"],
+    medical: ["medical", "health", "صحي", "صحه", "طب", "مستشفى", "مستشفي"],
+    water: ["water", "مياه"],
+    electricity: ["electricity", "power", "كهرباء", "طاقه", "طاقة"],
+    logistics: ["logistics", "لوجستيات", "سلاسل", "امداد"],
+    finance: ["finance", "تمويل", "مالي"],
+    agriculture: ["agriculture", "زراعه", "زراعة"],
+    infrastructure: ["infrastructure", "بنيه", "بنية", "البنية", "البنيه", "بنيةتحتية", "البنيةالتحتية"],
+    airport: ["airport", "مطار"],
+    hospital: ["hospital", "مستشفى", "مستشفي"],
+    security: ["security", "امن", "أمن"],
+  };
+
+  // Build a reverse map for fast lookup: token -> canonical
+  const REVERSE = (() => {
+    const map = new Map();
+    for (const [canon, arr] of Object.entries(CANON)) {
+      for (const term of arr) map.set(normalize(term), canon);
+      // include the canon itself
+      map.set(normalize(canon), canon);
     }
+    return map;
+  })();
 
-    const qLower = q.trim().toLowerCase();
-    return grouped
-      .map((g) => ({
-        ...g,
-        matches: g.matches.filter((m) => m.score >= Number(minScore || 0)),
-      }))
-      .filter((g) =>
-        qLower
-          ? (g.project.title || "").toLowerCase().includes(qLower) ||
-            (g.project.summary || "").toLowerCase().includes(qLower)
-          : true
-      )
-      .sort((a, b) => (b.matches[0]?.score || 0) - (a.matches[0]?.score || 0));
-  }, [projects, users, q, minScore]);
+  const toCanonicalTokens = (source) => {
+    const toks = normalize(source)
+      .split(/[\s,]+/)
+      .filter(Boolean);
+    const out = [];
+    for (const tok of toks) {
+      out.push(REVERSE.get(tok) || tok); // fall back to raw token if unknown
+    }
+    return out;
+  };
+  // ------------------------------------------------------------------
+
+  // very lightweight overlap score with canonical tokens (AR/EN tolerant)
+  const score = (project, pro) => {
+    const pTags = Array.isArray(project.tags)
+      ? project.tags
+      : String(project.tags || "")
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean);
+
+    const projectText =
+      [pick(project, "title"), pick(project, "summary")].join(" ");
+
+    const pCanon = new Set([
+      ...pTags.flatMap((x) => toCanonicalTokens(x)),
+      ...toCanonicalTokens(projectText),
+    ]);
+
+    const proText = [
+      pro.profession || pro.profile?.profession || "",
+      pro.expertise || pro.profile?.expertise || "",
+    ].join(",");
+
+    const proCanon = toCanonicalTokens(proText);
+
+    let s = 0;
+    for (const tok of proCanon) if (pCanon.has(tok)) s++;
+    return s;
+  };
+
+  const filtered = useMemo(() => {
+    const f = normalize(filter || "");
+    return projects
+      .filter((p) => {
+        const hay = normalize(
+          [pick(p, "title"), pick(p, "summary"), (p.tags || []).join(",")].join(
+            " "
+          )
+        );
+        return !f || hay.includes(f);
+      })
+      .map((p) => {
+        const matches = pros
+          .map((u) => ({ u, s: score(p, u) }))
+          .filter((m) => m.s >= Number(minScore))
+          .sort((a, b) => b.s - a.s);
+        return { p, matches };
+      });
+  }, [projects, pros, filter, minScore, i18n.language]);
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4">
-      <div className="bg-white/90 shadow-soft rounded-2xl p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
-          <h1 className="text-3xl font-extrabold text-brandNavy">Project ↔ Professional Matching</h1>
-        </div>
-
-        {/* Controls */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
-          <input
-            className="input md:w-1/2"
-            placeholder="Filter projects by title/summary…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          <div className="flex items-center gap-3">
-            <label className="text-sm text-gray-700">Min score</label>
-            <input
-              type="number"
-              min="0"
-              className="input w-24"
-              value={minScore}
-              onChange={(e) => setMinScore(e.target.value)}
-            />
-            <button
-              className="btn-outline"
-              onClick={() => {
-                setQ("");
-                setMinScore(1);
-              }}
-            >
-              Reset
-            </button>
-          </div>
-        </div>
-
-        {loading ? (
-          <p className="text-gray-600 italic">Calculating matches…</p>
-        ) : results.length === 0 ? (
-          <p className="text-gray-500 italic">No matches available.</p>
-        ) : (
-          <div className="space-y-8">
-            {results.map(({ project, matches }) => (
-              <div key={project.id} className="bg-white/95 border-l-4 border-brandGold rounded-xl shadow-soft p-6">
-                <h2 className="text-xl font-bold text-brandNavy">{project.title}</h2>
-                <p className="text-sm text-gray-600">{project.summary}</p>
-
-                {matches.length === 0 ? (
-                  <p className="mt-3 text-gray-500 italic">No professionals meet the threshold.</p>
-                ) : (
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="table">
-                      <thead>
-                        <tr className="bg-gray-50">
-                          <th>Professional</th>
-                          <th>Email</th>
-                          <th>Profession</th>
-                          <th>Expertise</th>
-                          <th>Score</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {matches.map(({ user, score }) => (
-                          <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="font-semibold text-brandNavy">
-                              {user?.id || user?.email ? (
-                                <Link
-                                  to={`/admin/users/${encodeURIComponent(user.id || user.email)}`}
-                                  className="text-brandBlue hover:underline"
-                                  title="View user profile"
-                                >
-                                  {user.fullName || "—"}
-                                </Link>
-                              ) : (
-                                user.fullName || "—"
-                              )}
-                            </td>
-                            <td>
-                              {user?.email ? (
-                                <Link
-                                  to={`/admin/users/${encodeURIComponent(user.email)}`}
-                                  className="text-brandBlue hover:underline"
-                                  title="View user profile"
-                                >
-                                  {user.email}
-                                </Link>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                            <td>{user.profession || "—"}</td>
-                            <td>
-                              {Array.isArray(user.expertise) && user.expertise.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {user.expertise.map((t) => (
-                                    <span key={t} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-                                      {t}
-                                    </span>
-                                  ))}
-                                </div>
-                              ) : (
-                                <span className="text-gray-400 text-xs italic">None</span>
-                              )}
-                            </td>
-                            <td className="font-semibold">{score}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+    <div className="space-y-6" dir={dir}>
+      <div className="flex gap-3 items-center">
+        <input
+          className="input"
+          placeholder={t("admin.matching.filterPlaceholder")}
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        />
+        <label className="label">{t("admin.matching.minScore")}</label>
+        <input
+          className="input w-24"
+          type="number"
+          min={0}
+          value={minScore}
+          onChange={(e) => setMinScore(e.target.value)}
+        />
       </div>
+
+      {filtered.length === 0 ? (
+        <p className="text-gray-500">{t("admin.matching.empty")}</p>
+      ) : (
+        filtered.map(({ p, matches }) => (
+          <div
+            key={p.id}
+            className="bg-white/90 rounded-xl shadow-soft p-5 space-y-2 border-l-4 border-brandGold"
+          >
+            <h3 className="text-brandNavy font-bold text-lg">{pick(p, "title")}</h3>
+            <p className="text-sm text-gray-600">{pick(p, "summary")}</p>
+
+            {matches.length === 0 ? (
+              <p className="text-sm text-gray-500">{t("admin.matching.noneMeet")}</p>
+            ) : (
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-gray-500">
+                    <tr>
+                      <th className="text-start p-2">{t("admin.matching.th.professional")}</th>
+                      <th className="text-start p-2 hidden md:table-cell">{t("admin.matching.th.email")}</th>
+                      <th className="text-start p-2 hidden md:table-cell">{t("admin.matching.th.profession")}</th>
+                      <th className="text-start p-2 hidden md:table-cell">{t("admin.matching.th.expertise")}</th>
+                      <th className="text-start p-2">{t("admin.matching.th.score")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {matches.map(({ u, s }) => (
+                      <tr key={u.id} className="border-t">
+                        <td className="p-2">{u.fullName}</td>
+                        <td className="p-2 hidden md:table-cell">{u.email}</td>
+                        <td className="p-2 hidden md:table-cell">
+                          {u.profession || u.profile?.profession || "—"}
+                        </td>
+                        <td className="p-2 hidden md:table-cell">
+                          {u.expertise || u.profile?.expertise || t("common.none")}
+                        </td>
+                        <td className="p-2 font-semibold">{s}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ))
+      )}
     </div>
   );
 }

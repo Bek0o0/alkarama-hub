@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { getLocalized } from "../utils/i18nContent"; // ✅ added
 
 const Projects = () => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === "rtl";
+
   const [projects, setProjects] = useState([]);
   const userEmail = localStorage.getItem("userEmail");
-  const userRole = localStorage.getItem("userRole"); // <-- NEW: role gate
   const userName =
     localStorage.getItem("userName") ||
     localStorage.getItem("fullName") ||
@@ -18,13 +22,8 @@ const Projects = () => {
   }, []);
 
   const postInterest = async (projectId, title) => {
-    // Gate: only logged-in standard users can express interest
-    if (userRole !== "user") {
-      alert("Only signed-in users can register interest in projects.");
-      return;
-    }
     if (!userEmail) {
-      alert("Please login first to register your interest.");
+      alert(t("projectsPublic.loginFirst"));
       return;
     }
     try {
@@ -41,24 +40,33 @@ const Projects = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      alert("Thanks! Your interest was recorded for admin review.");
+      alert(t("projectsPublic.interestOk"));
     } catch (e) {
       console.error("Failed to submit interest:", e);
-      alert("Could not submit interest. Please try again.");
+      alert(t("projectsPublic.interestFail"));
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-16 px-4">
+    <div className="max-w-7xl mx-auto py-16 px-4" dir={isRTL ? "rtl" : "ltr"}>
       <h1 className="text-4xl font-bold text-brandNavy mb-8 text-center">
-        Rebuilding Projects
+        {t("projectsPage.title")}
       </h1>
 
       {projects.length === 0 ? (
-        <p className="text-center text-gray-500 italic">No projects available.</p>
+        <p className="text-center text-gray-500 italic">
+          {t("projectsPage.empty")}
+        </p>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((p) => {
+            // ✅ localized fields
+            const titleLoc = getLocalized(p, "title", i18n.language);
+            const summaryLoc = getLocalized(p, "summary", i18n.language);
+
+            // ✅ prefer base64 `image`, then `imageUrl`
+            const cover = p.image || p.imageUrl || "";
+
             const cost = Number(p.cost || 0);
             const donated = Number(p.donated || 0);
             const progress = cost ? Math.min((donated / cost) * 100, 100) : 0;
@@ -66,21 +74,35 @@ const Projects = () => {
             return (
               <div
                 key={p.id}
-                className="card border-l-4 border-brandGold hover:shadow-md transition"
+                className="card border-l-4 border-brandGold hover:shadow-md transition overflow-hidden"
               >
-                <div className="flex items-center justify-between">
+                {/* ✅ optional image */}
+                {cover ? (
+                  <Link to={`/projects/${p.id}`}>
+                    <img
+                      src={cover}
+                      alt=""
+                      className="w-full h-36 object-cover"
+                    />
+                  </Link>
+                ) : null}
+
+                <div className="flex items-center justify-between mt-3">
                   <Link
                     to={`/projects/${p.id}`}
                     className="text-xl font-semibold text-brandNavy hover:underline"
+                    dir="auto"
                   >
-                    {p.title}
+                    {titleLoc}
                   </Link>
                   <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
-                    Trusted
+                    {t("projectsPage.trusted")}
                   </span>
                 </div>
 
-                <p className="text-gray-700 text-sm mt-1">{p.summary}</p>
+                <p className="text-gray-700 text-sm mt-1" dir="auto">
+                  {summaryLoc}
+                </p>
 
                 <div className="mt-3">
                   <div className="w-full h-2 bg-gray-200 rounded">
@@ -96,31 +118,28 @@ const Projects = () => {
 
                 {Array.isArray(p.tags) && p.tags.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {p.tags.map((t) => (
+                    {p.tags.map((tTag) => (
                       <span
-                        key={t}
+                        key={tTag}
                         className="text-[11px] bg-gray-100 text-gray-700 px-2 py-1 rounded-full"
+                        dir="auto"
                       >
-                        {t}
+                        {tTag}
                       </span>
                     ))}
                   </div>
                 )}
 
-                <div className="mt-4 flex gap-3">
+                <div className={`mt-4 flex gap-3 ${isRTL ? "justify-start" : ""}`}>
                   <Link to={`/projects/${p.id}`} className="btn-secondary">
-                    View Details
+                    {t("projectsPage.view")}
                   </Link>
-
-                  {/* Show "I'm Interested" ONLY for signed-in users (not admins/guests) */}
-                  {userRole === "user" && (
-                    <button
-                      className="btn-primary"
-                      onClick={() => postInterest(p.id, p.title)}
-                    >
-                      I’m Interested
-                    </button>
-                  )}
+                  <button
+                    className="btn-primary"
+                    onClick={() => postInterest(p.id, titleLoc)}
+                  >
+                    {t("projectsPage.imInterested")}
+                  </button>
                 </div>
               </div>
             );

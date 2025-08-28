@@ -1,16 +1,13 @@
-// tailwind.config.js
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        // Existing palette (kept for backward-compat with old pages)
         primary: "#166534",
         secondary: "#c0392b",
         gold: "#c9a64a",
         textDark: "#1a1a1a",
 
-        // Embassy-style palette
         brandNavy: "#0F2438",
         brandNavySoft: "#17344d",
         brandBlue: "#1f4e79",

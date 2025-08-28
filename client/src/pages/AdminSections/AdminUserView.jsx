@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function AdminUserView() {
-  const { key } = useParams(); // could be id OR email
+  const { t } = useTranslation();
+  const { id } = useParams(); // can be user.id OR email
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -10,88 +13,132 @@ export default function AdminUserView() {
     const load = async () => {
       try {
         setLoading(true);
-        let u;
-        if (key.includes("@")) {
-          const r = await fetch(
-            `http://localhost:5000/users?email=${encodeURIComponent(key)}`
+
+        let data = null;
+
+        // If :id looks like an email, fetch by email query
+        if (id && id.includes("@")) {
+          const res = await fetch(
+            `http://localhost:5000/users?email=${encodeURIComponent(id)}`
           );
-          const arr = await r.json();
-          u = Array.isArray(arr) && arr.length ? arr[0] : null;
+          const list = await res.json();
+          data = Array.isArray(list) && list.length ? list[0] : null;
         } else {
-          const r = await fetch(`http://localhost:5000/users/${key}`);
-          u = await r.json();
+          const res = await fetch(`http://localhost:5000/users/${id}`);
+          if (res.ok) data = await res.json();
         }
-        setUser(u || null);
-      } catch (e) {
-        console.error(e);
+
+        setUser(data || null);
+      } catch {
         setUser(null);
       } finally {
         setLoading(false);
       }
     };
+
     load();
-  }, [key]);
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">{t("common.loading")}</div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <p className="text-gray-600">{t("admin.userView.notFound")}</p>
+        <button className="btn-secondary mt-4" onClick={() => navigate(-1)}>
+          {t("common.back")}
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4">
-      <div className="bg-white/95 rounded-2xl shadow-soft p-8">
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="bg-white/95 shadow-soft rounded-2xl p-6 border">
         <div className="flex items-center gap-3 mb-4">
-          <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
-          <h1 className="text-3xl font-extrabold text-brandNavy">User Profile</h1>
+          <img src="/logo.png" alt="Sudan Emblem" className="w-7 h-7 object-contain" />
+          <h1 className="text-2xl font-extrabold text-brandNavy">
+            {t("admin.userView.title")}
+          </h1>
         </div>
 
-        {loading ? (
-          <p className="text-gray-600 italic">Loading…</p>
-        ) : !user ? (
-          <p className="text-gray-600 italic">User not found.</p>
-        ) : (
-          <div className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <p><span className="font-semibold">Full Name:</span> {user.fullName || "—"}</p>
-                <p><span className="font-semibold">Email:</span> {user.email || "—"}</p>
-                <p><span className="font-semibold">DOB:</span> {user.dob || "—"}</p>
-                <p><span className="font-semibold">Country:</span> {user.country || "—"}</p>
-                <p><span className="font-semibold">Role:</span> {user.role || "user"}</p>
-              </div>
-              <div className="space-y-2">
-                <p><span className="font-semibold">Profession:</span> {user.profession || "—"}</p>
-                <p><span className="font-semibold">Expertise:</span> {user.expertise || "—"}</p>
-                <p><span className="font-semibold">Availability:</span> {user.availability || "—"}</p>
-                <p><span className="font-semibold">Tags:</span> {user.tags || "—"}</p>
-                {user.profilePicPreview ? (
-                  <img
-                    src={user.profilePicPreview}
-                    alt="Profile"
-                    className="w-24 h-24 rounded-full border object-cover mt-2"
-                  />
-                ) : null}
-              </div>
-            </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <p>
+              <strong>{t("common.name")}:</strong> {user.fullName || "—"}
+            </p>
+            <p>
+              <strong>{t("common.email")}:</strong> {user.email || "—"}
+            </p>
+            <p>
+              <strong>{t("admin.professionals.profession")}:</strong>{" "}
+              {user.profession || "—"}
+            </p>
+            <p>
+              <strong>{t("admin.professionals.availability")}:</strong>{" "}
+              {user.availability || "—"}
+            </p>
+            <p>
+              <strong>{t("admin.professionals.location")}:</strong>{" "}
+              {user.location || "—"}
+            </p>
+            <p>
+              <strong>{t("admin.userView.verified")}:</strong>{" "}
+              {user.verified ? t("common.yes") : t("common.no")}
+            </p>
+          </div>
 
-            <div className="pt-4 border-t">
-              <h3 className="font-semibold mb-2">CV</h3>
-              {user.cv ? (
-                <a
-                  href={user.cvPreview || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-outline"
-                >
-                  View / Download CV
-                </a>
-              ) : (
-                <p className="text-gray-600">No CV on file.</p>
-              )}
-            </div>
+          <div>
+            <p>
+              <strong>{t("admin.userView.expertise")}:</strong>
+            </p>
+            {Array.isArray(user.expertise) && user.expertise.length ? (
+              <div className="mt-1 flex flex-wrap gap-2">
+                {user.expertise.map((x) => (
+                  <span
+                    key={x}
+                    className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full"
+                  >
+                    {x}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">{t("common.noneListed")}</p>
+            )}
 
-            <div className="pt-4 border-t">
-              <Link to="/admin" className="text-brandBlue hover:underline">
-                ← Back to Admin Dashboard
-              </Link>
+            <div className="mt-3">
+              <p>
+                <strong>{t("admin.userView.cv")}:</strong>{" "}
+                {user.cv ? (
+                  <a
+                    href={user.cv}
+                    className="text-brandBlue hover:underline"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {t("admin.userView.downloadCv")}
+                  </a>
+                ) : (
+                  t("admin.userView.noCv")
+                )}
+              </p>
             </div>
           </div>
-        )}
+        </div>
+
+        <div className="mt-6 flex gap-3">
+          <button className="btn-secondary" onClick={() => navigate(-1)}>
+            {t("common.back")}
+          </button>
+          <Link className="btn-primary" to="/admin">
+            {t("admin.userView.backToAdmin")}
+          </Link>
+        </div>
       </div>
     </div>
   );
