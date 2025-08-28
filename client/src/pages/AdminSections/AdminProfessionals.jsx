@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const AdminProfessionals = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // UI filters
   const [search, setSearch] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [professionFilter, setProfessionFilter] = useState("");
@@ -28,7 +29,6 @@ const AdminProfessionals = () => {
     }
   };
 
-  // Toggle verification
   const handleVerifiedToggle = async (id, verified) => {
     try {
       await fetch(`http://localhost:5000/users/${id}`, {
@@ -39,23 +39,21 @@ const AdminProfessionals = () => {
       fetchUsers();
     } catch (err) {
       console.error("Failed to update verification:", err);
-      alert("Error updating verification.");
+      alert(t("common.errorUpdating"));
     }
   };
 
-  // (Optional) delete user if your original supported it
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this professional?")) return;
+    if (!window.confirm(t("admin.professionals.confirmDelete"))) return;
     try {
       await fetch(`http://localhost:5000/users/${id}`, { method: "DELETE" });
       fetchUsers();
     } catch (err) {
       console.error("Failed to delete user:", err);
-      alert("Error deleting user.");
+      alert(t("common.actionFailed"));
     }
   };
 
-  // Derive list of professionals
   const professionals = useMemo(() => {
     return users.filter((u) => {
       const looksProfessional =
@@ -66,9 +64,7 @@ const AdminProfessionals = () => {
 
   const professions = useMemo(() => {
     const set = new Set();
-    professionals.forEach((u) => {
-      if (u.profession) set.add(u.profession);
-    });
+    professionals.forEach((u) => { if (u.profession) set.add(u.profession); });
     return Array.from(set);
   }, [professionals]);
 
@@ -93,28 +89,25 @@ const AdminProfessionals = () => {
       <div className="bg-white/90 shadow-soft rounded-2xl p-8">
         <div className="flex items-center gap-3 mb-6">
           <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
-          <h1 className="text-3xl font-extrabold text-brandNavy">Diaspora Professionals</h1>
+          <h1 className="text-3xl font-extrabold text-brandNavy">{t("admin.professionals.title")}</h1>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
           <input
             className="input md:w-1/2"
-            placeholder="Search by name, email, profession, or expertise…"
+            placeholder={t("admin.professionals.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        <div className="flex gap-3 items-center">
+          <div className="flex gap-3 items-center">
             <select
               className="input"
               value={professionFilter}
               onChange={(e) => setProfessionFilter(e.target.value)}
             >
-              <option value="">All professions</option>
+              <option value="">{t("admin.professionals.allProfessions")}</option>
               {professions.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
+                <option key={p} value={p}>{p}</option>
               ))}
             </select>
 
@@ -125,63 +118,43 @@ const AdminProfessionals = () => {
                 checked={verifiedOnly}
                 onChange={(e) => setVerifiedOnly(e.target.checked)}
               />
-              Verified only
+              {t("admin.professionals.verifiedOnly")}
             </label>
 
             <button className="btn-outline" onClick={() => { setSearch(""); setProfessionFilter(""); setVerifiedOnly(false); }}>
-              Clear
+              {t("common.clear")}
             </button>
           </div>
         </div>
 
         {loading ? (
-          <p className="text-gray-600 italic">Loading professionals…</p>
+          <p className="text-gray-600 italic">{t("common.loading")}</p>
         ) : filtered.length === 0 ? (
-          <p className="text-gray-500 italic">No professionals match your filters.</p>
+          <p className="text-gray-500 italic">{t("admin.professionals.empty")}</p>
         ) : (
           <div className="space-y-6">
             {filtered.map((u) => (
-              <div
-                key={u.id}
-                className="bg-white/95 border-l-4 border-brandGold rounded-xl shadow-soft p-6"
-              >
-                {/* Header */}
+              <div key={u.id} className="bg-white/95 border-l-4 border-brandGold rounded-xl shadow-soft p-6">
                 <div className="flex justify-between gap-4 flex-wrap">
                   <div className="min-w-[260px]">
                     <h3 className="text-lg font-bold text-brandNavy">
-                      {u?.id || u?.email ? (
-                        <Link
-                          to={`/admin/users/${encodeURIComponent(u.id || u.email)}`}
-                          className="text-brandBlue hover:underline"
-                          title="View user profile"
-                        >
-                          {u.fullName || "—"}
-                        </Link>
-                      ) : (
-                        u.fullName || "—"
-                      )}
+                      <Link className="text-brandBlue hover:underline" to={`/admin/user/${u.id}`}>
+                        {u.fullName || "—"}
+                      </Link>
                     </h3>
                     <p className="text-sm text-gray-600">
-                      <strong>Email:</strong>{" "}
-                      {u?.email ? (
-                        <Link
-                          to={`/admin/users/${encodeURIComponent(u.email)}`}
-                          className="text-brandBlue hover:underline"
-                          title="View user profile"
-                        >
-                          {u.email}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}{" "}
-                      &middot <strong>Verified:</strong> {u.verified ? "Yes" : "No"}
+                      <strong>{t("common.email")}:</strong>{" "}
+                      <Link className="text-brandBlue hover:underline" to={`/admin/user/${u.id}`}>
+                        {u.email || "—"}
+                      </Link>{" "}
+                      &middot{" "}
+                      <strong>{t("admin.professionals.verified")}:</strong> {u.verified ? t("common.yes") : t("common.no")}
                     </p>
                     <p className="text-sm text-gray-600">
-                      <strong>Profession:</strong> {u.profession || "—"}
+                      <strong>{t("admin.professionals.profession")}:</strong> {u.profession || "—"}
                     </p>
                   </div>
 
-                  {/* Verify toggle */}
                   <div className="text-right">
                     <label className="inline-flex items-center gap-2">
                       <input
@@ -190,46 +163,38 @@ const AdminProfessionals = () => {
                         checked={!!u.verified}
                         onChange={(e) => handleVerifiedToggle(u.id, e.target.checked)}
                       />
-                      <span className="text-sm">{u.verified ? "Verified" : "Unverified"}</span>
+                      <span className="text-sm">{u.verified ? t("admin.professionals.verified") : t("admin.professionals.unverified")}</span>
                     </label>
                   </div>
                 </div>
 
-                {/* Expertise + availability */}
                 <div className="mt-3">
                   <div className="flex flex-wrap gap-2">
                     {Array.isArray(u.expertise) && u.expertise.length > 0 ? (
-                      u.expertise.map((t) => (
-                        <span
-                          key={t}
-                          className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full"
-                        >
-                          {t}
+                      u.expertise.map((tkn) => (
+                        <span key={tkn} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                          {tkn}
                         </span>
                       ))
                     ) : (
-                      <span className="text-gray-400 text-xs italic">No expertise listed</span>
+                      <span className="text-gray-400 text-xs italic">{t("common.noneListed")}</span>
                     )}
                   </div>
                   {u.availability && (
                     <p className="text-xs text-gray-600 mt-2">
-                      <strong>Availability:</strong> {u.availability}
+                      <strong>{t("admin.professionals.availability")}:</strong> {u.availability}
                     </p>
                   )}
                   {u.location && (
                     <p className="text-xs text-gray-600">
-                      <strong>Location:</strong> {u.location}
+                      <strong>{t("admin.professionals.location")}:</strong> {u.location}
                     </p>
                   )}
                 </div>
 
-                {/* Actions */}
                 <div className="mt-4 flex justify-end gap-4">
-                  <button
-                    onClick={() => handleDelete(u.id)}
-                    className="text-red-600 hover:underline text-sm"
-                  >
-                    Delete
+                  <button onClick={() => handleDelete(u.id)} className="text-red-600 hover:underline text-sm">
+                    {t("common.delete")}
                   </button>
                 </div>
               </div>

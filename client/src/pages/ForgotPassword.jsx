@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 /** SHA-256 helper for hashing reset codes (demo security) */
 async function sha256Hex(text) {
@@ -13,6 +14,9 @@ function genCode() {
 }
 
 export default function ForgotPassword() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === "rtl";
+
   // Step state
   const [step, setStep] = useState(1); // 1 = identify, 2 = verify code & reset
   const [busy, setBusy] = useState(false);
@@ -37,7 +41,7 @@ export default function ForgotPassword() {
     setInfoMsg("");
 
     if (!email.trim() || !dob.trim() || !last4.trim()) {
-      alert("Please fill email, date of birth, and last 4 digits.");
+      alert(t("reset.alertFill"));
       return;
     }
 
@@ -50,7 +54,7 @@ export default function ForgotPassword() {
       const user = Array.isArray(data) && data.length ? data[0] : null;
 
       if (!user) {
-        alert("No account found with that email.");
+        alert(t("reset.noAccount"));
         setBusy(false);
         return;
       }
@@ -58,34 +62,32 @@ export default function ForgotPassword() {
       // 2) Check DoB
       const dobMatches = (user.dob || "").slice(0, 10) === dob;
       if (!dobMatches) {
-        alert("Date of birth does not match our records.");
+        alert(t("reset.dobMismatch"));
         setBusy(false);
         return;
       }
 
-      // 3) If user has verification on file, require last4 to match.
+      // 3) Require last4 match if present
       if (user.idLast4) {
         if (last4 !== String(user.idLast4)) {
-          alert("The last 4 digits do not match our records.");
+          alert(t("reset.last4Mismatch"));
           setBusy(false);
           return;
         }
       } else {
-        // If no last4 on file, safer to block self-service reset in this demo.
-        alert("Self-service reset is disabled for this account. Please contact Admin.");
+        alert(t("reset.selfServiceDisabled"));
         setBusy(false);
         return;
       }
 
-      // 4) Create or replace a reset record for this email
-      //    First, delete any existing reset records for this email (cleanup)
+      // cleanup any existing reset records for this email
       const existingRes = await fetch(`http://localhost:5000/password_resets?email=${encodeURIComponent(email.trim())}`);
       const existing = await existingRes.json();
       for (const r of existing || []) {
         await fetch(`http://localhost:5000/password_resets/${r.id}`, { method: "DELETE" });
       }
 
-      // 5) Generate a code, store only its hash, with expiry and attempts
+      // create new record
       const rawCode = genCode();
       const codeHash = await sha256Hex(rawCode);
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutes
@@ -107,11 +109,11 @@ export default function ForgotPassword() {
       setResetId(resetRecord.id);
       setStep(2);
 
-      // DEMO: Instead of emailing, show the code in an info box.
-      setInfoMsg(`Demo code (normally sent via email): ${rawCode}`);
+      // DEMO: show the code instead of sending email
+      setInfoMsg(t("reset.demoCode", { code: rawCode }));
     } catch (err) {
       console.error(err);
-      alert("Could not start password reset.");
+      alert(t("reset.couldNotStart"));
     } finally {
       setBusy(false);
     }
@@ -123,66 +125,65 @@ export default function ForgotPassword() {
     setInfoMsg("");
 
     if (!code.trim() || !p1.trim() || !p2.trim()) {
-      alert("Please fill all fields.");
+      alert(t("reset.fillAll"));
       return;
     }
     if (p1 !== p2) {
-      alert("Passwords do not match.");
+      alert(t("reset.noMatch"));
       return;
     }
     if (p1.length < 4) {
-      alert("Use at least 4 characters (demo).");
+      alert(t("reset.minChars"));
       return;
     }
 
     try {
       setBusy(true);
 
-      // 1) Load the reset record
+      // load reset record
       const rrRes = await fetch(`http://localhost:5000/password_resets/${resetId}`);
       if (!rrRes.ok) {
-        alert("Reset session not found. Please start again.");
+        alert(t("reset.sessionMissing"));
         setBusy(false);
         return;
       }
       const rr = await rrRes.json();
 
-      // 2) Check expiry and attempts
+      // expiry & attempts
       if (new Date(rr.expiresAt).getTime() < Date.now()) {
         await fetch(`http://localhost:5000/password_resets/${rr.id}`, { method: "DELETE" });
-        alert("The reset code has expired. Please start again.");
+        alert(t("reset.expired"));
         setBusy(false);
         return;
       }
       if ((rr.attempts || 0) >= 5) {
         await fetch(`http://localhost:5000/password_resets/${rr.id}`, { method: "DELETE" });
-        alert("Too many attempts. Please start again.");
+        alert(t("reset.tooMany"));
         setBusy(false);
         return;
       }
 
-      // 3) Compare code hashes
+      // compare code
       const codeHash = await sha256Hex(code.trim());
       const ok = codeHash === rr.codeHash;
 
-      // 4) If wrong, increment attempts and block after threshold
       if (!ok) {
         await fetch(`http://localhost:5000/password_resets/${rr.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ attempts: (rr.attempts || 0) + 1 }),
         });
-        alert("Invalid code.");
+        alert(t("reset.invalidCode"));
         setBusy(false);
         return;
       }
 
-      // 5) Find the user and patch their password
+      // update password
       const uRes = await fetch(`http://localhost:5000/users?email=${encodeURIComponent(rr.email)}`);
       const list = await uRes.json();
       const user = Array.isArray(list) && list.length ? list[0] : null;
       if (!user) {
-        alert("Account not found.");
+        alert(t("reset.noAccount"));
         setBusy(false);
         return;
       }
@@ -194,26 +195,25 @@ export default function ForgotPassword() {
       });
       if (!upd.ok) throw new Error("Update failed");
 
-      // 6) Clean up the reset record
       await fetch(`http://localhost:5000/password_resets/${rr.id}`, { method: "DELETE" });
 
-      alert("Password updated. You can now log in.");
+      alert(t("reset.updated"));
       window.location.href = "/login";
     } catch (err) {
       console.error(err);
-      alert("Could not reset password.");
+      alert(t("reset.couldNotFinish"));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
       <section className="bg-brandNavy text-white">
         <div className="max-w-3xl mx-auto px-6 py-8 flex items-center gap-3">
           <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
-          <h1 className="text-3xl md:text-4xl font-extrabold">Reset Password</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold">{t("reset.title")}</h1>
         </div>
         <div className="h-1 w-full bg-brandGold" />
       </section>
@@ -228,12 +228,10 @@ export default function ForgotPassword() {
 
           {step === 1 ? (
             <form onSubmit={startReset} className="space-y-5">
-              <p className="text-xs text-gray-600 -mt-2">
-                For security, please confirm your identity. Self-service reset requires your account to have ID verification on file.
-              </p>
+              <p className="text-xs text-gray-600 -mt-2">{t("reset.note")}</p>
 
               <div>
-                <label className="label">Account Email</label>
+                <label className="label">{t("reset.email")}</label>
                 <input
                   className="input"
                   type="email"
@@ -244,7 +242,7 @@ export default function ForgotPassword() {
               </div>
 
               <div>
-                <label className="label">Date of Birth (YYYY-MM-DD)</label>
+                <label className="label">{t("reset.dobLabel")}</label>
                 <input
                   className="input"
                   type="date"
@@ -254,7 +252,7 @@ export default function ForgotPassword() {
               </div>
 
               <div>
-                <label className="label">Last 4 digits of your ID/Passport</label>
+                <label className="label">{t("reset.last4Label")}</label>
                 <input
                   className="input"
                   value={last4}
@@ -265,22 +263,22 @@ export default function ForgotPassword() {
               </div>
 
               <button className="btn-primary w-full" disabled={busy}>
-                {busy ? "Checking…" : "Continue"}
+                {busy ? t("reset.checking") : t("reset.continue")}
               </button>
 
               <div className="text-center text-sm text-gray-600">
-                Remembered it?{" "}
-                <a href="/login" className="underline hover:text-brandNavy">Back to Login</a>
+                {t("reset.remembered")}{" "}
+                <a href="/login" className="underline hover:text-brandNavy">
+                  {t("reset.backToLogin")}
+                </a>
               </div>
             </form>
           ) : (
             <form onSubmit={finishReset} className="space-y-5">
-              <p className="text-xs text-gray-600 -mt-2">
-                Enter the 6-digit code we just “sent” (shown above for demo), then set your new password.
-              </p>
+              <p className="text-xs text-gray-600 -mt-2">{t("reset.enterCodeNote")}</p>
 
               <div>
-                <label className="label">6-digit code</label>
+                <label className="label">{t("reset.code6")}</label>
                 <input
                   className="input"
                   value={code}
@@ -292,7 +290,7 @@ export default function ForgotPassword() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="label">New password</label>
+                  <label className="label">{t("reset.newPass")}</label>
                   <input
                     className="input"
                     type="password"
@@ -301,7 +299,7 @@ export default function ForgotPassword() {
                   />
                 </div>
                 <div>
-                  <label className="label">Confirm new password</label>
+                  <label className="label">{t("reset.confirmPass")}</label>
                   <input
                     className="input"
                     type="password"
@@ -312,12 +310,14 @@ export default function ForgotPassword() {
               </div>
 
               <button className="btn-primary w-full" disabled={busy}>
-                {busy ? "Updating…" : "Update Password"}
+                {busy ? t("reset.updating") : t("reset.updateBtn")}
               </button>
 
               <div className="text-center text-sm text-gray-600">
-                Back to{" "}
-                <a href="/login" className="underline hover:text-brandNavy">Login</a>
+                {t("reset.back")}{" "}
+                <a href="/login" className="underline hover:text-brandNavy">
+                  {t("reset.login")}
+                </a>
               </div>
             </form>
           )}

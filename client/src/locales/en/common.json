@@ -1,0 +1,523 @@
+{
+  "brand": "Alkarama Hub",
+
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "projects": "Projects",
+    "publicReports": "Public Reports",
+    "submitReport": "Submit Report",
+    "myReports": "My Reports",
+    "profile": "My Profile",
+    "admin": "Admin",
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout"
+  },
+
+  "home": {
+    "heroTitle": "Alkarama Hub",
+    "heroTagline": "Report issues safely and connect diaspora expertise to verified rebuilding projects.",
+    "ctaAdmin": "Go to Admin Dashboard",
+    "ctaSubmit": "Submit a Report",
+    "tiles": {
+      "civicTitle": "Civic Reporting",
+      "civicDesc": "Flag issues safely — anonymity optional.",
+      "projectsTitle": "Rebuilding Projects",
+      "projectsDesc": "Explore verified initiatives.",
+      "aboutTitle": "About the Platform",
+      "aboutDesc": "Why it exists and how it helps."
+    },
+    "announcements": "Announcements",
+    "ticker": "• This is an academic prototype — use dummy data only. • Administrators verify and publish selected public reports. • Professionals can list skills to support rebuilding efforts.",
+    "scenes": "Scenes of Sudan",
+    "galleryCaptions": [
+      "Meroë Pyramids — Sudan",
+      "Khartoum — Nile Street",
+      "Sudan - Red Sea State",
+      "Sudan — Marrah Mountains - Darfur"
+    ],
+    "imagesNote": "Images are illustrative. This is an academic prototype — no real personal data is collected."
+  },
+
+  "login": {
+    "title": "Login",
+    "note": "Academic prototype — use dummy data only.",
+    "panelTagline": "Secure civic reporting and diaspora registry — academic prototype.",
+    "panelLine1": "• Reports are stored locally (JSON server) for demo only.",
+    "panelLine2": "• Use dummy credentials provided during sign up.",
+    "email": "Email",
+    "emailPh": "you@example.com",
+    "password": "Password",
+    "passwordPh": "Enter your password",
+    "btn": "Login",
+    "btnBusy": "Signing in…",
+    "forgot": "Forgot Password",
+    "noAccount": "Don’t have an account?",
+    "alertEnterBoth": "Enter email and password.",
+    "alertInvalid": "Invalid credentials.",
+    "alertLoggedIn": "Logged in.",
+    "alertFailed": "Login failed."
+  },
+
+  "submit": {
+    "title": "Submit a Civic Report",
+    "reportTitle": "Report Title",
+    "reportTitlePh": "Short, descriptive title",
+    "description": "Description",
+    "descriptionPh": "What happened? Include useful details.",
+    "category": "Category",
+    "cats": {
+      "corruption": "Corruption",
+      "security": "Security",
+      "medical": "Medical",
+      "infrastructure": "Infrastructure"
+    },
+    "locationOpt": "Location (optional)",
+    "locationPh": "City/Area",
+    "attach": "Attach Evidence (image or PDF)",
+    "anon": "Submit anonymously",
+    "btn": "Submit Report",
+    "btnBusy": "Submitting…",
+    "alertFill": "Please enter a title and description.",
+    "alertOk": "Report submitted successfully.",
+    "alertFail": "Failed to submit report."
+  },
+
+  "footer": {
+    "tagline": "Civic reporting & diaspora registry — academic prototype.",
+    "rights": "All rights reserved (demo).",
+    "quick": "Quick Links",
+    "support": "Support",
+    "privacy": "Privacy & Terms",
+    "accessibility": "Accessibility",
+    "contact": "Contact",
+    "locations": "Khartoum • Cairo • London"
+  },
+
+  "myReports": {
+    "title": "My Submitted Reports",
+    "searchPh": "Search by title...",
+    "allCategories": "All Categories",
+    "allStatuses": "All Statuses",
+    "none": "No reports match your filters.",
+    "date": "Date",
+    "category": "Category",
+    "location": "Location",
+    "undisclosed": "Undisclosed",
+    "viewEvidence": "View Evidence"
+  },
+
+  "profile": {
+    "title": "My Profile",
+    "accountInfo": "Account & Professional Info",
+    "fullName": "Full Name",
+    "email": "Email",
+    "country": "Country",
+    "availability": "Availability",
+    "dob": "Date of Birth",
+    "cv": "CV",
+    "cvNone": "None uploaded",
+    "profession": "Profession",
+    "expertise": "Areas of Expertise",
+    "tags": "Expertise Tags",
+    "photo": "Profile Picture",
+    "noImage": "No image uploaded",
+    "edit": "Edit Profile",
+    "editTitle": "Edit Profile",
+    "tagsHint": "Expertise Tags (comma-separated)",
+    "fullTime": "Full-time",
+    "partTime": "Part-time",
+    "adHoc": "Ad-hoc",
+    "cvUpload": "Upload CV",
+    "photoUpload": "Profile Picture",
+    "save": "Save",
+    "cancel": "Cancel",
+    "matched": "Matched Projects",
+    "noMatches": "No matching projects found for your expertise yet.",
+    "matchScore": "Match score",
+    "idTitle": "Identity Verification (Optional)",
+    "status": "Status",
+    "statusProvided": "Provided",
+    "statusNotProvided": "Not provided",
+    "idHint": "Enter a dummy National ID or Passport number for demo verification. We store a one-way hash and the last 4 digits only.",
+    "idType": "ID Type (optional)",
+    "nationalId": "National ID",
+    "passport": "Passport",
+    "idNumber": "ID / Passport Number (optional)",
+    "idPh": "Enter a dummy number for demo",
+    "saving": "Saving...",
+    "saveVerification": "Save Verification",
+    "createdAt": "Account created",
+    "role": "Role",
+    "na": "N/A",
+    "alertUserNotFound": "User not found.",
+    "alertLoadError": "Error loading profile.",
+    "alertUpdated": "Profile updated.",
+    "alertUpdateError": "Error updating profile.",
+    "idErrorNational": "National ID must be 8–14 digits.",
+    "idErrorPassport": "Passport must be 1 letter + 7 digits (e.g., A1234567).",
+    "alertVerificationUpdated": "Verification updated.",
+    "alertVerificationError": "Failed to update verification."
+  },
+
+  "publicReports": {
+    "title": "Public Reports",
+    "searchPh": "Search by title, description, or category…",
+    "allCategories": "All Categories",
+    "allStatuses": "All Statuses",
+    "clear": "Clear",
+    "empty": "No public reports match your filters.",
+    "date": "Date",
+    "category": "Category",
+    "location": "Location",
+    "undisclosed": "Undisclosed",
+    "viewEvidence": "View Evidence"
+  },
+
+  "about": {
+    "title": "About the Platform",
+    "what": {
+      "title": "What is Alkarama Hub?",
+      "body": "An academic prototype that helps citizens report issues safely and connects diaspora professionals to verified rebuilding projects."
+    },
+    "how": {
+      "title": "How it works",
+      "point1": "Citizens submit civic reports — optionally anonymous.",
+      "point2": "Admins verify and publish selected reports to the public page.",
+      "point3": "Professionals can register skills and express interest in projects."
+    },
+    "safety": {
+      "title": "Safety & Data",
+      "body": "Use dummy data only. For ID verification demo we store a one-way hash and the last 4 digits only."
+    }
+  },
+
+  "admin": {
+    "dashboardTitle": "Admin Dashboard",
+
+    "tabs": {
+      "reports": "Civic Reports",
+      "professionals": "Professionals",
+      "projects": "Rebuilding Projects",
+      "users": "Users",
+      "donations": "Donations",
+      "interests": "Interests",
+      "matching": "Matching"
+    },
+
+    "common": {
+      "loading": "Loading…",
+      "clear": "Clear",
+      "reset": "Reset",
+      "date": "Date",
+      "email": "Email",
+      "yes": "Yes",
+      "no": "No",
+      "verified": "Verified",
+      "anonymous": "Anonymous",
+      "errorUpdating": "Error updating.",
+      "errorDeleting": "Error deleting.",
+      "errorAdding": "Error adding.",
+      "confirmDelete": "Delete?",
+      "confirmRemove": "Remove?",
+      "errorRemoving": "Could not remove."
+    },
+
+    "reports": {
+      "title": "Civic Reports",
+      "searchPlaceholder": "Search by title/category…",
+      "allStatuses": "All statuses",
+      "status": {
+        "Pending": "Pending",
+        "Resolved": "Resolved",
+        "Declined": "Declined",
+        "Public": "Public"
+      },
+      "empty": "No reports match your filters.",
+      "submitted": "Submitted",
+      "by": "By",
+      "category": "Category",
+      "location": "Location",
+      "viewEvidence": "View Evidence"
+    },
+
+    "professionals": {
+      "title": "Diaspora Professionals",
+      "searchPlaceholder": "Search by name, email, profession, or expertise…",
+      "allProfessions": "All professions",
+      "verifiedOnly": "Verified only",
+      "empty": "No professionals match your filters.",
+      "verified": "Verified",
+      "unverified": "Unverified",
+      "confirmDelete": "Delete this professional?",
+      "profession": "Profession",
+      "availability": "Availability",
+      "location": "Location",
+      "noExpertise": "No expertise listed"
+    },
+
+    "projects": {
+      "title": "Manage Projects",
+      "addNew": "Add New Project",
+      "titlePh": "Title",
+      "costPh": "Estimated Cost (USD)",
+      "summaryPh": "Summary",
+      "tagsPh": "Tags (comma separated)",
+      "addButton": "Add Project",
+      "searchPh": "Search projects…",
+      "searchPlaceholder": "Search projects…",
+      "empty": "No projects found.",
+      "colTitle": "Title",
+      "colSummary": "Summary",
+      "colCost": "Cost",
+      "colDonated": "Donated",
+      "colStatus": "Status",
+      "colTags": "Tags",
+      "colInterested": "Interested",
+      "colActions": "Actions",
+      "none": "None"
+    },
+
+    "users": {
+      "title": "Manage Users",
+      "searchPh": "Search by name or email…",
+      "allRoles": "All roles",
+      "empty": "No users match your filters.",
+      "colName": "Name",
+      "colEmail": "Email",
+      "colRole": "Role",
+      "colVerified": "Verified",
+      "colProfession": "Profession",
+      "colExpertise": "Expertise",
+      "colActions": "Actions",
+      "none": "None"
+    },
+
+    "interests": {
+      "title": "Volunteer Interests",
+      "searchPlaceholder": "Search by name, email, or project...",
+      "allProjects": "All projects",
+      "empty": "No interests found.",
+      "confirmRemove": "Remove this interest?",
+      "th": {
+        "project": "Project",
+        "user": "User",
+        "email": "Email",
+        "date": "Date",
+        "actions": "Actions"
+      }
+    },
+
+    "donations": {
+      "title": "Donation History",
+      "searchPlaceholder": "Search by donor, email, or project…",
+      "empty": "No donations found.",
+      "th": {
+        "donor": "Donor",
+        "email": "Email",
+        "dob": "DOB",
+        "amount": "Amount",
+        "method": "Method",
+        "invoice": "Invoice",
+        "project": "Project",
+        "date": "Date"
+      }
+    },
+
+    "matching": {
+      "title": "Project ↔ Professional Matching",
+      "filterPlaceholder": "Filter projects by title/summary…",
+      "minScore": "Min score",
+      "empty": "No matches available.",
+      "noneMeet": "No professionals meet the threshold.",
+      "th": {
+        "professional": "Professional",
+        "email": "Email",
+        "profession": "Profession",
+        "expertise": "Expertise",
+        "score": "Score"
+      }
+    },
+
+    "userView": {
+      "title": "User Profile",
+      "notFound": "User not found.",
+      "verified": "Verified",
+      "expertise": "Expertise",
+      "cv": "CV",
+      "downloadCv": "Download CV",
+      "noCv": "No CV uploaded",
+      "profilePic": "Profile Picture",
+      "dob": "Date of birth",
+      "backToAdmin": "Back to Admin"
+    }
+  },
+
+  "common": {
+    "loading": "Loading…",
+    "calculating": "Calculating…",
+    "clear": "Clear",
+    "reset": "Reset",
+    "remove": "Remove",
+    "delete": "Delete",
+    "errorUpdating": "Error updating.",
+    "actionFailed": "Action failed.",
+    "yes": "Yes",
+    "no": "No",
+    "none": "None",
+    "noneListed": "None listed",
+    "back": "Back",
+    "name": "Name",
+    "email": "Email"
+  },
+  "projectsPublic": {
+    "title": "Rebuilding Projects",
+    "trusted": "Trusted",
+    "imInterested": "I'm Interested",
+    "viewDetails": "View Details"
+  },
+"privacy": {
+    "title": "Privacy Policy & Terms of Use",
+    "updated": "Last updated: 23 Aug 2025",
+    "sectionPrivacy": "Privacy Policy",
+    "sectionTerms": "Terms of Use",
+    "intro": "Alkarama Hub is an academic prototype. We do not collect or process real personal data. Any information used during testing must be dummy/simulated. Do not submit sensitive or identifying information.",
+    "items": {
+      "accounts": { "label": "Accounts:", "body": "Mock entries stored in a local JSON server." },
+      "reports": { "label": "Reports:", "body": "Fictional data demonstrating submission, status, and visibility." },
+      "files": { "label": "Files:", "body": "Uploaded “invoices” / images are for demo only." },
+      "storage": { "label": "Storage:", "body": "We use localStorage for role/email to support routing." },
+      "retention": { "label": "Retention:", "body": "Test data will be removed before final submission." }
+    },
+    "terms": {
+      "one": "Use only with dummy data; you’re responsible for any content you submit.",
+      "two": "This is not for emergencies or real fundraising.",
+      "three": "Admin features are restricted and for evaluation only.",
+      "four": "By using the system, you agree to these terms."
+    },
+    "footer": "For questions, contact the project owner/supervisor."
+  },
+
+  "projectsPage": {
+    "title": "Rebuilding Projects",
+    "trusted": "Trusted",
+    "view": "View Details",
+    "imInterested": "I’m Interested",
+    "empty": "No projects available."
+  },
+
+  "projectsPublic": {
+    "loginFirst": "Please login first to register your interest.",
+    "interestOk": "Thanks! Your interest was recorded for admin review.",
+    "interestFail": "Could not submit interest. Please try again."
+  },
+
+  "signup": {
+    "title": "Create an Account",
+    "note": "Academic prototype — use dummy data only. You can enter a National ID or Passport number for demo verification. We store a one-way hash and last 4 digits only.",
+    "fullName": "Full Name",
+    "email": "Email",
+    "password": "Password",
+    "dob": "Date of Birth",
+    "country": "Country",
+    "profession": "Profession",
+    "expertise": "Expertise (keywords)",
+    "expertisePh": "e.g., cardiology, Java, logistics",
+    "idType": "ID Type (optional)",
+    "idNumber": "ID / Passport Number (optional)",
+    "idNumberPh": "Enter a dummy number for demo",
+    "accept": "I accept the",
+    "privacy": "Privacy & Terms",
+    "create": "Create Account",
+    "creating": "Creating…",
+    "alertAccept": "You must accept the Privacy & Terms.",
+    "alertRequired": "Please complete all required fields (Full Name, Email, Password, Date of Birth).",
+    "alertExists": "An account with this email already exists.",
+    "alertOk": "Account created. Please login.",
+    "alertFail": "Could not create account."
+  },
+
+  "reset": {
+    "title": "Reset Password",
+    "note": "For security, please confirm your identity. Self-service reset requires your account to have ID verification on file.",
+    "email": "Account Email",
+    "dobLabel": "Date of Birth (YYYY-MM-DD)",
+    "last4Label": "Last 4 digits of your ID/Passport",
+    "checking": "Checking…",
+    "continue": "Continue",
+    "remembered": "Remembered it?",
+    "backToLogin": "Back to Login",
+    "enterCodeNote": "Enter the 6-digit code we just “sent” (shown above for demo), then set your new password.",
+    "code6": "6-digit code",
+    "newPass": "New password",
+    "confirmPass": "Confirm new password",
+    "updating": "Updating…",
+    "updateBtn": "Update Password",
+    "back": "Back to",
+    "login": "Login",
+
+    "alertFill": "Please fill email, date of birth, and last 4 digits.",
+    "noAccount": "No account found with that email.",
+    "dobMismatch": "Date of birth does not match our records.",
+    "last4Mismatch": "The last 4 digits do not match our records.",
+    "selfServiceDisabled": "Self-service reset is disabled for this account. Please contact Admin.",
+    "demoCode": "Demo code (normally sent via email): {{code}}",
+    "couldNotStart": "Could not start password reset.",
+
+    "fillAll": "Please fill all fields.",
+    "noMatch": "Passwords do not match.",
+    "minChars": "Use at least 4 characters (demo).",
+    "sessionMissing": "Reset session not found. Please start again.",
+    "expired": "The reset code has expired. Please start again.",
+    "tooMany": "Too many attempts. Please start again.",
+    "invalidCode": "Invalid code.",
+    "updated": "Password updated. You can now log in.",
+    "couldNotFinish": "Could not reset password."
+  },
+  "projectDetail": {
+    "loading": "Loading project...",
+    "notFound": "Project not found.",
+    "status": "Status:",
+    "estimatedCost": "Estimated Cost:",
+    "donated": "Donated:",
+    "stillNeeded": "${{amount}} still needed",
+    "imInterestedVolunteer": "I’m Interested (Volunteer)",
+    "donationAmountUSD": "Donation Amount (USD)",
+    "enterAmount": "Enter amount",
+    "paymentMethod": "Payment Method",
+    "methods": {
+    "mbok": "Bank of Khartoum (M-BOK)",
+    "fawry": "Fawry",
+    "cash": "Cash / Collection Point",
+    "Planned": "Planned",
+    "Active": "Active",
+    "Completed": "Completed"
+    },
+    "uploadInvoice": "Upload Payment Invoice",
+    "submitDonation": "Submit Donation",
+
+    "mbok": { "title": "Transfer via M-BOK (Bank of Khartoum)" },
+    "fawry": { "title": "Transfer via Fawry Bank" },
+    "cash": {
+      "title": "Cash Payment via NGO or Government Collection Point",
+      "note": "Please upload the stamped receipt or invoice you received."
+    },
+    "bank": {
+      "accountName": "Account Name:",
+      "accountNumber": "Account Number:",
+      "bank": "Bank:",
+      "uploadNote": "Please upload the invoice after completing the transfer."
+    },
+
+    "alert": {
+      "mustLoginDonate": "You must be logged in to donate.",
+      "enterValidAmount": "Enter a valid donation amount.",
+      "uploadInvoiceFirst": "Please upload your payment invoice before submitting.",
+      "donateOk": "Donation submitted successfully!",
+      "donateFail": "Error processing donation.",
+      "interestOk": "Thanks — your interest has been recorded for the admin.",
+      "interestFail": "Could not record your interest."
+    }
+  }
+}

@@ -1,204 +1,345 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { getLocalized } from "../../utils/i18nContent";
 
-const AdminProjects = () => {
+/** Convert a File to a Base64 data URL (for quick demo storage in JSON server) */
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+export default function AdminProjects() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === "rtl";
+
+  // list + ui
   const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  // new project form
   const [title, setTitle] = useState("");
+  const [titleAr, setTitleAr] = useState("");
   const [summary, setSummary] = useState("");
+  const [summaryAr, setSummaryAr] = useState("");
   const [cost, setCost] = useState("");
   const [tags, setTags] = useState("");
-  const [search, setSearch] = useState("");
-  const [interestCounts, setInterestCounts] = useState({}); // NEW
+  const [status, setStatus] = useState("Planned");
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = () =>
+    fetch("http://localhost:5000/projects")
+      .then((r) => r.json())
+      .then((d) => setProjects(d || []))
+      .catch(() => setProjects([]));
 
   useEffect(() => {
-    fetchProjects();
-    fetchInterestCounts(); // NEW
+    load();
   }, []);
 
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("http://localhost:5000/projects");
-      const data = await res.json();
-      setProjects(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Failed to load projects:", err);
-      setProjects([]);
-    } finally {
-      setLoading(false);
-    }
+  const clearForm = () => {
+    setTitle("");
+    setTitleAr("");
+    setSummary("");
+    setSummaryAr("");
+    setCost("");
+    setTags("");
+    setStatus("Planned");
+    setImageFile(null);
+    setImagePreview("");
   };
 
-  // NEW: pre-compute counts by projectId
-  const fetchInterestCounts = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/interests");
-      const list = await res.json();
-      const counts = {};
-      (Array.isArray(list) ? list : []).forEach((i) => {
-        counts[i.projectId] = (counts[i.projectId] || 0) + 1;
-      });
-      setInterestCounts(counts);
-    } catch (e) {
-      console.error("Failed to load interests:", e);
-      setInterestCounts({});
+  const handleImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setImageFile(null);
+      setImagePreview("");
+      return;
     }
+    setImageFile(file);
+    const b64 = await toBase64(file);
+    setImagePreview(b64);
   };
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
+  const addProject = async () => {
+    if (!title.trim() && !titleAr.trim()) {
+      alert(t("admin.common.errorAdding"));
+      return;
+    }
     try {
-      const newProject = {
+      setBusy(true);
+
+      let imageDataUrl = imagePreview; // already base64 if selected
+      if (!imageDataUrl && imageFile) {
+        imageDataUrl = await toBase64(imageFile);
+      }
+
+      const tagsArr = tags
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+
+      const payload = {
         id: Date.now().toString(),
-        title,
-        summary,
-        cost: parseFloat(cost) || 0,
+
+        // English + Arabic (keep your base keys)
+        title: title.trim(),
+        title_ar: titleAr.trim(),
+        summary: summary.trim(),
+        summary_ar: summaryAr.trim(),
+
+        // Compatibility: also store *_en so other views using pick(title_en/title_ar) keep working
+        title_en: title.trim(),
+        summary_en: summary.trim(),
+
+        cost: Number(cost || 0),
         donated: 0,
-        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-        status: "Planned",
+        status,
+        tags: tagsArr,
+        image: imageDataUrl || "",
+
+        createdAt: new Date().toISOString(),
       };
+
       await fetch("http://localhost:5000/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProject),
+        body: JSON.stringify(payload),
       });
-      setTitle(""); setSummary(""); setCost(""); setTags("");
-      fetchProjects();
-      fetchInterestCounts(); // keep counts fresh
-    } catch (err) {
-      console.error("Add failed:", err);
-      alert("Error adding project.");
+
+      clearForm();
+      await load();
+    } catch (e) {
+      console.error(e);
+      alert(t("admin.common.errorAdding"));
+    } finally {
+      setBusy(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this project?")) return;
+  const removeProject = async (id) => {
+    if (!window.confirm(t("admin.common.confirmDelete"))) return;
     try {
       await fetch(`http://localhost:5000/projects/${id}`, { method: "DELETE" });
-      fetchProjects();
-      fetchInterestCounts();
-    } catch (err) {
-      console.error("Delete failed:", err);
-      alert("Error deleting project.");
+      await load();
+    } catch (e) {
+      console.error(e);
+      alert(t("admin.common.errorDeleting"));
     }
   };
 
-  const handleStatusChange = async (id, status) => {
-    try {
-      await fetch(`http://localhost:5000/projects/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      fetchProjects();
-    } catch (err) {
-      console.error("Status update failed:", err);
-      alert("Error updating status.");
-    }
-  };
-
-  const filtered = projects.filter((p) =>
-    search.trim().length === 0
-      ? true
-      : (p.title || "").toLowerCase().includes(search.toLowerCase()) ||
-        (p.summary || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = projects.filter((p) => {
+    const titleLoc = getLocalized(p, "title", i18n.language).toLowerCase();
+    const summaryLoc = getLocalized(p, "summary", i18n.language).toLowerCase();
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
+    return titleLoc.includes(q) || summaryLoc.includes(q);
+  });
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4">
-      <div className="bg-white/90 shadow-soft rounded-2xl p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
-          <h1 className="text-3xl font-extrabold text-brandNavy">Manage Projects</h1>
-        </div>
-
-        {/* Add new project */}
-        <form onSubmit={handleAdd} className="space-y-4 mb-8 bg-brandIvory/50 p-4 rounded-xl">
-          <h2 className="text-lg font-bold text-brandNavy">Add New Project</h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            <input className="input" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            <input className="input" placeholder="Estimated Cost (USD)" type="number" value={cost} onChange={(e) => setCost(e.target.value)} />
+    <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Header / Add Form */}
+      <div className="bg-white/95 rounded-2xl shadow-soft p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-brandNavy">
+            {t("admin.projects.title")}
+          </h2>
+          <div className="flex gap-2 items-center">
+            <button
+              className="btn-secondary"
+              onClick={() => {
+                setSearch("");
+                clearForm();
+              }}
+            >
+              {t("admin.common.clear")}
+            </button>
+            <input
+              className="input"
+              placeholder={t("admin.projects.searchPh")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-          <textarea className="textarea" placeholder="Summary" value={summary} onChange={(e) => setSummary(e.target.value)} required />
-          <input className="input" placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
-          <button type="submit" className="btn-primary">Add Project</button>
-        </form>
-
-        {/* Search bar */}
-        <div className="flex justify-between items-center mb-4">
-          <input className="input md:w-1/2" placeholder="Search projects…" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <button onClick={() => setSearch("")} className="btn-outline">Clear</button>
         </div>
 
-        {loading ? (
-          <p className="text-gray-600 italic">Loading projects…</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-gray-500 italic">No projects found.</p>
+        <p className="font-semibold text-brandNavy mb-3">
+          {t("admin.projects.addNew")}
+        </p>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Titles */}
+          <div>
+            <label className="label">{t("admin.projects.titlePh")} (EN)</label>
+            <input
+              className="input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t("admin.projects.titlePh")}
+            />
+          </div>
+          <div>
+            <label className="label">{t("admin.projects.titlePh")} (AR)</label>
+            <input
+              className="input"
+              value={titleAr}
+              onChange={(e) => setTitleAr(e.target.value)}
+              placeholder={t("admin.projects.titlePh")}
+              dir="rtl"
+            />
+          </div>
+
+          {/* Summaries */}
+          <div className="md:col-span-1">
+            <label className="label">{t("admin.projects.colSummary")} (EN)</label>
+            <textarea
+              className="input h-28"
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              placeholder={t("admin.projects.summaryPh")}
+            />
+          </div>
+          <div className="md:col-span-1">
+            <label className="label">{t("admin.projects.colSummary")} (AR)</label>
+            <textarea
+              className="input h-28"
+              value={summaryAr}
+              onChange={(e) => setSummaryAr(e.target.value)}
+              placeholder={t("admin.projects.summaryPh")}
+              dir="rtl"
+            />
+          </div>
+
+          {/* Cost / Status / Tags */}
+          <div>
+            <label className="label">{t("admin.projects.costPh")}</label>
+            <input
+              type="number"
+              className="input"
+              value={cost}
+              onChange={(e) => setCost(e.target.value)}
+              placeholder="100000"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="label">{t("admin.projects.colStatus")}</label>
+            <select
+              className="input"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="Planned">Planned</option>
+              <option value="Active">Active</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="label">{t("admin.projects.tagsPh")}</label>
+            <input
+              className="input"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="construction, software"
+            />
+          </div>
+
+          {/* Image upload */}
+          <div className="md:col-span-2">
+            <label className="label">{t("admin.projects.image") || "Image"}</label>
+            <input type="file" accept="image/*" className="input" onChange={handleImage} />
+            {imagePreview ? (
+              <div className="mt-3">
+                <img
+                  src={imagePreview}
+                  alt="preview"
+                  className="h-32 rounded border object-cover"
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="md:col-span-2">
+            <button className="btn-primary" onClick={addProject} disabled={busy}>
+              {busy ? t("common.loading") : t("admin.projects.addButton")}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Projects table */}
+      <div className="bg-white/95 rounded-2xl shadow-soft p-6 overflow-x-auto">
+        {filtered.length === 0 ? (
+          <p className="text-gray-500 italic">{t("admin.projects.empty")}</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th>Title</th>
-                  <th>Summary</th>
-                  <th>Cost</th>
-                  <th>Donated</th>
-                  <th>Status</th>
-                  <th>Tags</th>
-                  <th>Interested</th> {/* NEW */}
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p) => (
-                  <tr key={p.id} className="hover:bg-gray-50">
-                    <td className="font-semibold text-brandNavy">{p.title}</td>
-                    <td className="max-w-xs truncate">{p.summary}</td>
-                    <td>${(p.cost || 0).toLocaleString()}</td>
-                    <td>${(p.donated || 0).toLocaleString()}</td>
-                    <td>
-                      <select
-                        value={p.status || "Planned"}
-                        onChange={(e) => handleStatusChange(p.id, e.target.value)}
-                        className="input"
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-gray-500">
+                <th className="py-2 pr-3">{t("admin.projects.colActions")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colInterested")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colTags")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colStatus")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colDonated")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colCost")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colSummary")}</th>
+                <th className="py-2 pr-3">{t("admin.projects.colTitle")}</th>
+                <th className="py-2 pr-3">IMG</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((p) => {
+                const titleLoc = getLocalized(p, "title", i18n.language);
+                const summaryLoc = getLocalized(p, "summary", i18n.language);
+                return (
+                  <tr key={p.id} className="border-t align-top">
+                    <td className="py-3 pr-3 whitespace-nowrap">
+                      <button
+                        className="text-red-600 hover:underline"
+                        onClick={() => removeProject(p.id)}
                       >
-                        <option>Planned</option>
-                        <option>Active</option>
-                        <option>Completed</option>
-                      </select>
-                    </td>
-                    <td>
-                      {Array.isArray(p.tags) && p.tags.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {p.tags.map((t) => (
-                            <span key={t} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-xs italic">None</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className="text-sm font-semibold">
-                        {interestCounts[p.id] || 0}
-                      </span>
-                    </td>
-                    <td>
-                      <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:underline text-sm">
-                        Delete
+                        {t("common.delete")}
                       </button>
                     </td>
+                    <td className="py-3 pr-3">
+                      {Array.isArray(p.interested) ? p.interested.length : p.interested || 0}
+                    </td>
+                    <td className="py-3 pr-3">
+                      {Array.isArray(p.tags) && p.tags.length
+                        ? p.tags.join(", ")
+                        : t("admin.projects.none")}
+                    </td>
+                    <td className="py-3 pr-3">{p.status || t("admin.projects.none")}</td>
+                    <td className="py-3 pr-3">${Number(p.donated || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-3">${Number(p.cost || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-3 max-w-xs">
+                      <div dir="auto" className="line-clamp-3">{summaryLoc}</div>
+                    </td>
+                    <td className="py-3 pr-3 font-semibold text-brandNavy" dir="auto">
+                      {titleLoc}
+                    </td>
+                    <td className="py-3 pr-3">
+                      {p.image ? (
+                        <img
+                          alt="thumb"
+                          src={p.image}
+                          className="h-10 w-16 object-cover rounded border"
+                        />
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
   );
-};
-
-export default AdminProjects;
+}

@@ -1,92 +1,108 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import About from "./pages/About";
-import Reports from "./pages/Reports";
+import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import PublicReports from "./pages/PublicReports";
+import SubmitReport from "./pages/SubmitReport";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import SubmitReport from "./pages/SubmitReport";
-import Admin from "./pages/Admin";
-import MyReports from "./pages/MyReports";
 import Profile from "./pages/Profile";
-import ForgotPassword from "./pages/ForgotPassword";
-import Projects from "./pages/Projects";
-import PublicReports from "./pages/PublicReports";
+import MyReports from "./pages/MyReports";
+import Admin from "./pages/Admin";
 import PrivacyTerms from "./pages/PrivacyTerms";
-import { getUserRole } from "./utils/auth";
-import bg from "./assets/bg.jpg";
+import ForgotPassword from "./pages/ForgotPassword";
 import AdminUserView from "./pages/AdminSections/AdminUserView";
 
+const RequireAuth = ({ children }) => {
+  const email = localStorage.getItem("userEmail");
+  return email ? children : <Navigate to="/login" replace />;
+};
 
+const RequireAdmin = ({ children }) => {
+  const role = localStorage.getItem("userRole");
+  return role === "admin" ? children : <Navigate to="/" replace />;
+};
 
-function AppRoutes({ userRole, setUserRole }) {
-  const location = useLocation();
-
-  useEffect(() => {
-    const role = getUserRole();
-    setUserRole(role);
-  }, [location, setUserRole]);
+export default function App() {
+  const userRole = localStorage.getItem("userRole") || "";
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Navbar userRole={userRole} />
-      <main className="min-h-[calc(100vh-64px)]">
+      <main className="flex-1">
         <Routes>
+          {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
-          <Route path="/privacy" element={<PrivacyTerms />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
-          <Route path="/login" element={<Login setUserRole={setUserRole} />} />
+          <Route path="/public-reports" element={<PublicReports />} />
+          <Route path="/privacy" element={<PrivacyTerms />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route
-            path="/reports"
-            element={["admin", "gov", "ngo"].includes(userRole) ? <Reports /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/admin"
-            element={userRole === "admin" ? <Admin /> : <Navigate to="/login" />}
-          />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          {/* Auth-required */}
           <Route
             path="/submit-report"
-            element={userRole === "user" ? <SubmitReport /> : <Navigate to="/login" />}
+            element={
+              <RequireAuth>
+                <SubmitReport />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <RequireAuth>
+                <Profile />
+              </RequireAuth>
+            }
           />
           <Route
             path="/my-reports"
-            element={userRole === "user" ? <MyReports /> : <Navigate to="/login" />}
-            />
+            element={
+              <RequireAuth>
+                <MyReports />
+              </RequireAuth>
+            }
+          />
+
+          {/* Admin-only */}
           <Route
-            path="/profile"
-            element={userRole === "user" ? <Profile /> : <Navigate to="/login" />}
-            />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/public-reports" element={<PublicReports />} />
-          <Route path="/admin/users/:key" element={<AdminUserView />} />
+            path="/admin/*"
+            element={
+              <RequireAdmin>
+                <Admin />
+              </RequireAdmin>
+            }
+          />
+
+          <Route
+            path="/admin/user/:id"
+            element={
+              <RequireAdmin>
+                <AdminUserView />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/admin/user"
+            element={
+              <RequireAdmin>
+                <AdminUserView />
+              </RequireAdmin>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       <Footer />
-    </>
-  );
-}
-
-function App() {
-  const [userRole, setUserRole] = useState(null);
-
-  return (
-    <div
-      className="min-h-screen bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: `url(${bg})` }}
-    >
-      <div className="min-h-screen backdrop-blur-sm bg-white/80">
-        <Router>
-          <AppRoutes userRole={userRole} setUserRole={setUserRole} />
-        </Router>
-      </div>
     </div>
   );
 }
-
-export default App;

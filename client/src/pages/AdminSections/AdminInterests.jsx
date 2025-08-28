@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function AdminInterests() {
+  const { t } = useTranslation();
   const [interests, setInterests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [projectFilter, setProjectFilter] = useState("");
 
-  // cache users to map email -> { id, fullName }
   const [usersByEmail, setUsersByEmail] = useState({});
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function AdminInterests() {
       if (Array.isArray(uData)) {
         const map = {};
         for (const u of uData) {
-          if (u?.email) map[u.email] = { id: u.id, fullName: u.fullName || "" };
+          if (u?.email) map[u.email] = u;
         }
         setUsersByEmail(map);
       } else {
@@ -47,52 +48,39 @@ export default function AdminInterests() {
   };
 
   const removeInterest = async (id) => {
-    if (!window.confirm("Remove this interest?")) return;
+    if (!window.confirm(t("admin.interests.confirmRemove"))) return;
     try {
       await fetch(`http://localhost:5000/interests/${id}`, { method: "DELETE" });
       setInterests((list) => list.filter((x) => x.id !== id));
     } catch (e) {
       console.error(e);
-      alert("Could not remove.");
+      alert(t("common.actionFailed"));
     }
   };
 
   const projects = useMemo(() => {
     const set = new Set();
     interests.forEach((x) => set.add(x.projectTitle || x.projectId || "—"));
-    return ["All projects", ...Array.from(set)];
-  }, [interests]);
+    return [t("admin.interests.allProjects"), ...Array.from(set)];
+  }, [interests, t]);
 
-  const userCell = (row) => {
-    const email = row.userEmail || "";
-    const info = usersByEmail[email];
-    const text =
-      row.userName && row.userName !== "N/A"
-        ? row.userName
-        : info?.fullName || email || "N/A";
-    const key = info?.id ? info.id : email;
-    if (!key) return text;
-    return (
-      <Link
-        to={`/admin/users/${encodeURIComponent(key)}`}
-        className="text-brandBlue hover:underline"
-        title="View user profile"
-      >
-        {text}
-      </Link>
-    );
+  const displayName = (row) => {
+    const fallback = row.userName && row.userName !== "N/A" ? row.userName : (row.userEmail || "N/A");
+    const u = row.userEmail ? usersByEmail[row.userEmail] : null;
+    if (!u) return <>{fallback}</>;
+    const label = row.userName && row.userName !== "N/A" ? row.userName : (u.fullName || u.email);
+    return <Link className="text-brandBlue hover:underline" to={`/admin/user/${u.id}`}>{label}</Link>;
   };
 
   const filtered = interests
     .filter((x) => {
       const term = search.trim().toLowerCase();
       if (!term) return true;
-      const hay =
-        `${x.projectTitle || ""} ${x.userEmail || ""} ${x.userName || ""}`.toLowerCase();
+      const hay = `${x.projectTitle || ""} ${x.userEmail || ""} ${x.userName || ""}`.toLowerCase();
       return hay.includes(term);
     })
     .filter((x) => {
-      if (!projectFilter || projectFilter === "All projects") return true;
+      if (!projectFilter || projectFilter === t("admin.interests.allProjects")) return true;
       const title = x.projectTitle || x.projectId || "—";
       return title === projectFilter;
     })
@@ -105,23 +93,22 @@ export default function AdminInterests() {
       <div className="bg-white/95 rounded-2xl shadow-soft p-6">
         <div className="flex items-center gap-3 mb-4">
           <img src="/logo.png" alt="Sudan Emblem" className="w-7 h-7 object-contain" />
-          <h2 className="text-2xl font-extrabold text-brandNavy">Volunteer Interests</h2>
+          <h2 className="text-2xl font-extrabold text-brandNavy">{t("admin.interests.title")}</h2>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-4">
           <input
             className="input md:w-1/2"
-            placeholder="Search by name, email, or project..."
+            placeholder={t("admin.interests.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <div className="flex gap-3">
             <select
               className="input"
-              value={projectFilter || "All projects"}
+              value={projectFilter || t("admin.interests.allProjects")}
               onChange={(e) =>
-                setProjectFilter(e.target.value === "All projects" ? "" : e.target.value)
+                setProjectFilter(e.target.value === t("admin.interests.allProjects") ? "" : e.target.value)
               }
             >
               {projects.map((p) => (
@@ -137,53 +124,65 @@ export default function AdminInterests() {
                 setProjectFilter("");
               }}
             >
-              Clear
+              {t("common.clear")}
             </button>
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-auto rounded-xl border bg-white">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-700">
-                <th className="text-left px-4 py-3">Project</th>
-                <th className="text-left px-4 py-3">User</th>
-                <th className="text-left px-4 py-3">Email</th>
-                <th className="text-left px-4 py-3">Date</th>
-                <th className="text-left px-4 py-3">Actions</th>
+                <th className="text-left px-4 py-3">{t("admin.interests.th.project")}</th>
+                <th className="text-left px-4 py-3">{t("admin.interests.th.user")}</th>
+                <th className="text-left px-4 py-3">{t("admin.interests.th.email")}</th>
+                <th className="text-left px-4 py-3">{t("admin.interests.th.date")}</th>
+                <th className="text-left px-4 py-3">{t("admin.interests.th.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
                   <td className="px-4 py-4 text-gray-600 italic" colSpan={5}>
-                    Loading…
+                    {t("common.loading")}
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
                   <td className="px-4 py-4 text-gray-600 italic" colSpan={5}>
-                    No interests found.
+                    {t("admin.interests.empty")}
                   </td>
                 </tr>
               ) : (
-                filtered.map((row) => (
-                  <tr key={row.id} className="border-t">
-                    <td className="px-4 py-3">{row.projectTitle || row.projectId}</td>
-                    <td className="px-4 py-3">{userCell(row)}</td>
-                    <td className="px-4 py-3">{row.userEmail || "—"}</td>
-                    <td className="px-4 py-3">{fmtDate(row.timestamp)}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        className="text-red-600 hover:underline"
-                        onClick={() => removeInterest(row.id)}
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                filtered.map((row) => {
+                  const u = row.userEmail ? usersByEmail[row.userEmail] : null;
+                  return (
+                    <tr key={row.id} className="border-t">
+                      <td className="px-4 py-3">{row.projectTitle || row.projectId}</td>
+                      <td className="px-4 py-3">{displayName(row)}</td>
+                      <td className="px-4 py-3">
+                        {row.userEmail ? (
+                          u ? (
+                            <Link className="text-brandBlue hover:underline" to={`/admin/user/${u.id}`}>
+                              {row.userEmail}
+                            </Link>
+                          ) : (
+                            row.userEmail
+                          )
+                        ) : "—"}
+                      </td>
+                      <td className="px-4 py-3">{fmtDate(row.timestamp)}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          className="text-red-600 hover:underline"
+                          onClick={() => removeInterest(row.id)}
+                        >
+                          {t("common.remove")}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
