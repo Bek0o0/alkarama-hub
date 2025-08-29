@@ -6,12 +6,14 @@
     "node": "18.x"
   },
   "scripts": {
+    "install-client": "npm --prefix client install",
+    "build-client": "npm --prefix client run build",
+    "build": "npm run install-client && npm run build-client",
     "start": "node server.js",
-    "build": "npm --prefix client run build",
-    "postinstall": "npm --prefix client install"
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "express": "^4.19.2",
-    "json-server": "^0.17.3"
+    "serve-static": "^1.15.0"
   }
 }
