@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE } from "../apiBase";
 
 const AdminDashboard = () => {
   const [reports, setReports] = useState([]);
@@ -11,7 +12,7 @@ const AdminDashboard = () => {
 
   const fetchReports = async () => {
     try {
-      const res = await fetch("http://localhost:5000/reports");
+      const res = await fetch(`${API_BASE}/reports`);
       const data = await res.json();
       setReports(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -22,7 +23,7 @@ const AdminDashboard = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("http://localhost:5000/users");
+      const res = await fetch(`${API_BASE}/users`);
       const data = await res.json();
       // show only end-user accounts (role === "user")
       setUsers((Array.isArray(data) ? data : []).filter((u) => u.role === "user"));

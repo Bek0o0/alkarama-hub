@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { getLocalized } from "../../utils/i18nContent";
+import { API_BASE } from "../../apiBase";
 
 /** Convert a File to a Base64 data URL (for quick demo storage in JSON server) */
 function toBase64(file) {
@@ -33,7 +34,7 @@ export default function AdminProjects() {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
-    return fetch("http://localhost:5000/projects")
+    return fetch(`${API_BASE}/projects`)
       .then((r) => r.json())
       .then((d) => setProjects(d || []))
       .catch(() => setProjects([]));
@@ -97,7 +98,7 @@ export default function AdminProjects() {
         createdAt: new Date().toISOString(),
       };
 
-      await fetch("http://localhost:5000/projects", {
+      await fetch(`${API_BASE}/projects`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

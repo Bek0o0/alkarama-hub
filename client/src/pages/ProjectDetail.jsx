@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../apiBase";
 
 export default function ProjectDetail() {
   const { t, i18n } = useTranslation();
@@ -99,7 +100,7 @@ export default function ProjectDetail() {
         timestamp: new Date().toISOString(),
       };
 
-      await fetch("http://localhost:5000/donations", {
+      await fetch(`${API_BASE}/donations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(donation),
@@ -124,7 +125,7 @@ export default function ProjectDetail() {
       createdAt: new Date().toISOString(),
     };
     try {
-      await fetch("http://localhost:5000/interests", {
+      await fetch(`${API_BASE}/interests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

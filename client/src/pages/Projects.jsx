@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getLocalized } from "../utils/i18nContent"; // ✅ added
+import { API_BASE } from "../apiBase";
 
 const Projects = () => {
   const { t, i18n } = useTranslation();
@@ -15,7 +16,7 @@ const Projects = () => {
     "";
 
   useEffect(() => {
-    fetch("http://localhost:5000/projects")
+    fetch(`${API_BASE}/projects`)
       .then((res) => res.json())
       .then((data) => setProjects(data || []))
       .catch(() => setProjects([]));
@@ -35,7 +36,7 @@ const Projects = () => {
         userName: userName || "N/A",
         timestamp: new Date().toISOString(),
       };
-      await fetch("http://localhost:5000/interests", {
+      await fetch(`${API_BASE}/interests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

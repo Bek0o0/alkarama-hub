@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import StatusBadge from "../../components/StatusBadge";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../../apiBase";
 
 const STATUS_OPTIONS = ["Pending", "Resolved", "Declined", "Public"];
 
@@ -22,7 +23,7 @@ const AdminReports = () => {
 
   const fetchUsersLookup = async () => {
     try {
-      const res = await fetch("http://localhost:5000/users");
+      const res = await fetch(`${API_BASE}/users`);
       const list = await res.json();
       const map = {};
       (Array.isArray(list) ? list : []).forEach((u) => {
@@ -37,7 +38,7 @@ const AdminReports = () => {
   const fetchReports = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/reports");
+      const res = await fetch(`${API_BASE}/reports`);
       const data = await res.json();
       setReports(Array.isArray(data) ? data : []);
     } catch (err) {

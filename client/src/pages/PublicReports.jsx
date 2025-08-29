@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import StatusBadge from "../components/StatusBadge";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../apiBase";
 
 export default function PublicReports() {
   const [reports, setReports] = useState([]);
@@ -12,7 +13,7 @@ export default function PublicReports() {
   const dir = i18n.language === "ar" ? "rtl" : "ltr";
 
   useEffect(() => {
-    fetch("http://localhost:5000/reports")
+    fetch(`${API_BASE}/reports`)
       .then((res) => res.json())
       .then((data) => setReports(Array.isArray(data) ? data : []))
       .catch(() => setReports([]));

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../../apiBase";
 
 export default function AdminInterests() {
   const { t } = useTranslation();
@@ -20,8 +21,8 @@ export default function AdminInterests() {
       setLoading(true);
 
       const [iRes, uRes] = await Promise.all([
-        fetch("http://localhost:5000/interests"),
-        fetch("http://localhost:5000/users"),
+        fetch(`${API_BASE}/interests`),
+        fetch(`${API_BASE}/users`),
       ]);
 
       const iData = await iRes.json();

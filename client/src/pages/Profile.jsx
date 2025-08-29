@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { matchProfessionalsToProject } from "../utils/matching";
 import { validateNationalId, validatePassport, last4, sha256 } from "../utils/validation";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../apiBase";
 
 const Profile = () => {
   const [formData, setFormData] = useState(null);
@@ -35,7 +36,7 @@ const Profile = () => {
 
           setIdForm((f) => ({ ...f, idType: user.idType || "national" }));
 
-          const projectsRes = await fetch("http://localhost:5000/projects");
+          const projectsRes = await fetch(`${API_BASE}/projects`);
           const projects = await projectsRes.json();
 
           const matched = (Array.isArray(projects) ? projects : [])

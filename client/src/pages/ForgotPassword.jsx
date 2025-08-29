@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../apiBase";
 
 /** SHA-256 helper for hashing reset codes (demo security) */
 async function sha256Hex(text) {
@@ -100,7 +101,7 @@ export default function ForgotPassword() {
         createdAt: new Date().toISOString()
       };
 
-      await fetch("http://localhost:5000/password_resets", {
+      await fetch(`${API_BASE}/password_resets`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(resetRecord),

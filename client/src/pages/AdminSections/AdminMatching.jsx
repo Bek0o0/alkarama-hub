@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../../apiBase";
 
 /* ---------- helpers hoisted out so they don't re-create each render ---------- */
 
@@ -68,8 +69,8 @@ export default function AdminMatching() {
 
   useEffect(() => {
     Promise.all([
-      fetch("http://localhost:5000/projects").then((r) => r.json()),
-      fetch("http://localhost:5000/users?role=user").then((r) => r.json()),
+      fetch(`${API_BASE}/projects`).then((r) => r.json()),
+      fetch(`${API_BASE}/users?role=user`).then((r) => r.json()),
     ])
       .then(([pj, us]) => {
         setProjects(pj || []);

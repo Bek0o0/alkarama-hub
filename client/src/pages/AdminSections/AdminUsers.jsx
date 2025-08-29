@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../../apiBase";
 
 const ROLES = ["user", "admin"];
 
@@ -19,7 +20,7 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/users");
+      const res = await fetch(`${API_BASE}/users`);
       const data = await res.json();
       setUsers(Array.isArray(data) ? data : []);
     } catch (err) {

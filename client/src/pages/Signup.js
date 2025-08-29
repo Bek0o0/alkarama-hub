@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../apiBase";
 
 async function sha256Hex(text) {
   const enc = new TextEncoder().encode(text);
@@ -82,7 +83,7 @@ export default function Signup() {
         return;
       }
 
-      await fetch("http://localhost:5000/users", {
+      await fetch(`${API_BASE}/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../apiBase";
 
 export default function SubmitReport() {
   const [title, setTitle] = useState("");
@@ -36,7 +37,7 @@ export default function SubmitReport() {
 
     try {
       setBusy(true);
-      await fetch("http://localhost:5000/reports", {
+      await fetch(`${API_BASE}/reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
