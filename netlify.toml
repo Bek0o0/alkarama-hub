@@ -1,0 +1,13 @@
+[build]
+  base = "client"
+  publish = "client/build"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18.20.3"
+  # Optional but helps CI memory usage a bit:
+  # NPM_FLAGS = "--no-fund --no-audit"
+
+# (Optional) Increase build timeout if your build is heavy
+# [build]
+#   timeout = 30
