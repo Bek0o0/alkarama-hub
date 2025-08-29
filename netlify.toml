@@ -1,13 +1,11 @@
 [build]
-  base = "client"
-  publish = "client/build"
+  # Run the build INSIDE the /client folder
+  base    = "client"
   command = "npm run build"
+  publish = "build"            # NOTE: relative to base, NOT client/build
 
 [build.environment]
   NODE_VERSION = "18.20.3"
-  # Optional but helps CI memory usage a bit:
-  # NPM_FLAGS = "--no-fund --no-audit"
-
-# (Optional) Increase build timeout if your build is heavy
-# [build]
-#   timeout = 30
+  CI = "true"
+  # If you set REACT_APP_API in the Netlify UI, you can omit it here.
+  # REACT_APP_API = "https://alkarama-hub.onrender.com"
