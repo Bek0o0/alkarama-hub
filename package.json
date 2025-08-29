@@ -6,14 +6,19 @@
     "node": "18.x"
   },
   "scripts": {
-    "install-client": "npm --prefix client install",
-    "build-client": "npm --prefix client run build",
-    "build": "npm run install-client && npm run build-client",
+    "postinstall": "npm --prefix client ci || npm --prefix client install",
+    "build": "npm --prefix client run build",
     "start": "node server.js",
-    "postinstall": "npm run build"
+    "dev:api": "node server.js",
+    "dev:ui": "npm --prefix client start",
+    "dev": "concurrently \"npm:dev:api\" \"npm:dev:ui\""
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2",
-    "serve-static": "^1.15.0"
+    "json-server": "^0.17.4"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }
