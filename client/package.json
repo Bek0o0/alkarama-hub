@@ -2,23 +2,34 @@
   "name": "client",
   "version": "0.1.0",
   "private": true,
-  "dependencies": {
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "i18next": "^23.10.1",
-    "i18next-browser-languagedetector": "^7.1.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-i18next": "^13.5.0",
-    "react-router-dom": "^7.6.3",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+  "engines": {
+    "node": ">=18 <19"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "lint": "eslint src --ext .js,.jsx",
+    "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "i18next": "^25.4.2",
+    "i18next-browser-languagedetector": "^8.2.0",
+    "lucide-react": "^0.525.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^15.7.3",
+    "react-router-dom": "^6.26.1",
+    "react-scripts": "5.0.1",
+    "typescript": "4.9.5"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-react-app": "^7.0.1",
+    "html-webpack-plugin": "^5.6.4"
+  },
+  "overrides": {
+    "typescript": "4.9.5"
   },
   "eslintConfig": {
     "extends": [
@@ -37,20 +48,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.11",
-    "@testing-library/jest-dom": "^6.6.4",
-    "@testing-library/react": "^16.3.0",
-    "autoprefixer": "^10.4.21",
-    "jest": "^27.5.1",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17",
-    "tailwindcss-cli": "^0.1.2"
-  },
-  "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
-  "main": "index.js",
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }

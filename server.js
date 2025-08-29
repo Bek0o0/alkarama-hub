@@ -1,23 +1,33 @@
 // server.js (root)
-const jsonServer = require("json-server");
 const path = require("path");
+const express = require("express");
+const jsonServer = require("json-server");
 
-const server = jsonServer.create();
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// 1) Serve the React build (client/build)
+const buildPath = path.join(__dirname, "client", "build");
+app.use(express.static(buildPath));
+
+// 2) JSON Server mounted at /api
 const router = jsonServer.router(path.join(__dirname, "db.json"));
-const middlewares = jsonServer.defaults({ static: "public" });
+const middlewares = jsonServer.defaults();
 
-server.use(middlewares);
-server.use(jsonServer.bodyParser);
-server.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  next();
+app.use("/api", middlewares, jsonServer.bodyParser, router);
+
+// 3) React router fallback (for any non-API route)
+app.get("*", (req, res) => {
+  // If someone hits a non-existent API path, return 404
+  if (req.path.startsWith("/api")) {
+    return res.status(404).json({ error: "Not found" });
+  }
+  res.sendFile(path.join(buildPath, "index.html"));
 });
 
-server.use(router);
-
-const port = process.env.PORT || 5000;
-server.listen(port, () => {
-  console.log("JSON Server running on port", port);
+// 4) Start server
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`   ▶ API   : http://localhost:${PORT}/api`);
+  console.log(`   ▶ Front : http://localhost:${PORT}/`);
 });
