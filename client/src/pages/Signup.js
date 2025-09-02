@@ -33,15 +33,22 @@ export default function Signup() {
 
   const submit = async (e) => {
     e.preventDefault();
+
+    // use the keys you have in your locales (alertAccept / alertRequired / alertExists / alertOk / alertFail)
     if (!form.accept) {
-      alert(t("signup.mustAccept") || "You must accept the Privacy & Terms.");
+      alert(t("signup.alertAccept"));
       return;
     }
     if (!form.fullName.trim() || !form.email.trim() || !form.password.trim() || !form.dob) {
-      alert(
-        t("signup.requiredAlert") ||
-          "Please complete all required fields (Full Name, Email, Password, Date of Birth)."
-      );
+      alert(t("signup.alertRequired"));
+      return;
+    }
+
+    // extra guard if browser locale doesn't enforce <input type="date">
+    const dobIsValid = !Number.isNaN(new Date(form.dob).getTime());
+    if (!dobIsValid) {
+      // optional key; falls back to English if missing
+      alert(t("signup.invalidDob") || "Please enter a valid date of birth.");
       return;
     }
 
@@ -59,7 +66,7 @@ export default function Signup() {
       id: Math.random().toString(36).slice(2, 6),
       fullName: form.fullName.trim(),
       email: form.email.trim(),
-      password: form.password,
+      password: form.password, // demo only
       dob: form.dob,
       country: form.country.trim(),
       profession: form.profession.trim(),
@@ -73,12 +80,14 @@ export default function Signup() {
 
     try {
       setBusy(true);
+
+      // use API_BASE (not localhost) for the duplicate check
       const check = await fetch(
-        `http://localhost:5000/users?email=${encodeURIComponent(newUser.email)}`
+        `${API_BASE}/users?email=${encodeURIComponent(newUser.email)}`
       );
       const exists = await check.json();
       if (Array.isArray(exists) && exists.length) {
-        alert(t("signup.emailExists") || "An account with this email already exists.");
+        alert(t("signup.alertExists"));
         setBusy(false);
         return;
       }
@@ -89,11 +98,11 @@ export default function Signup() {
         body: JSON.stringify(newUser),
       });
 
-      alert(t("signup.created") || "Account created. Please login.");
+      alert(t("signup.alertOk"));
       window.location.href = "/login";
     } catch (e2) {
       console.error(e2);
-      alert(t("signup.createError") || "Could not create account.");
+      alert(t("signup.alertFail"));
     } finally {
       setBusy(false);
     }
@@ -164,8 +173,8 @@ export default function Signup() {
           <div>
             <label className="label">{t("signup.idType")}</label>
             <select className="input" value={form.idType} onChange={on("idType")}>
-              <option>{t("signup.nationalId")}</option>
-              <option>{t("signup.passport")}</option>
+              <option>{t("profile.nationalId")}</option>
+              <option>{t("profile.passport")}</option>
             </select>
           </div>
           <div>
@@ -174,7 +183,7 @@ export default function Signup() {
               className="input"
               value={form.idNumber}
               onChange={on("idNumber")}
-              placeholder={t("login.idPh") || "Enter a dummy number for demo"}
+              placeholder={t("signup.idNumberPh") || "Enter a dummy number for demo"}
             />
           </div>
 
@@ -183,7 +192,7 @@ export default function Signup() {
             <span className="text-sm">
               {t("signup.accept")}{" "}
               <a className="underline" href="/privacy">
-                {t("footer.privacy")}
+                {t("signup.privacy")}
               </a>
             </span>
           </div>

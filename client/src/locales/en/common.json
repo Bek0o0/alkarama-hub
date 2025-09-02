@@ -57,7 +57,9 @@
     "alertEnterBoth": "Enter email and password.",
     "alertInvalid": "Invalid credentials.",
     "alertLoggedIn": "Logged in.",
-    "alertFailed": "Login failed."
+    "alertFailed": "Login failed.",
+    "alertNoAccount": "No account found with that email.",
+    "alertWrongPass": "Incorrect password."
   },
 
   "submit": {
@@ -371,13 +373,18 @@
     "name": "Name",
     "email": "Email"
   },
+
   "projectsPublic": {
     "title": "Rebuilding Projects",
     "trusted": "Trusted",
     "imInterested": "I'm Interested",
-    "viewDetails": "View Details"
+    "viewDetails": "View Details",
+    "loginFirst": "Please login first to register your interest.",
+    "interestOk": "Thanks! Your interest was recorded for admin review.",
+    "interestFail": "Could not submit interest. Please try again."
   },
-"privacy": {
+
+  "privacy": {
     "title": "Privacy Policy & Terms of Use",
     "updated": "Last updated: 23 Aug 2025",
     "sectionPrivacy": "Privacy Policy",
@@ -402,15 +409,13 @@
   "projectsPage": {
     "title": "Rebuilding Projects",
     "trusted": "Trusted",
-    "view": "View Details",
-    "imInterested": "I’m Interested",
-    "empty": "No projects available."
-  },
-
-  "projectsPublic": {
+    "imInterested": "I'm Interested",
+    "viewDetails": "View Details",
     "loginFirst": "Please login first to register your interest.",
     "interestOk": "Thanks! Your interest was recorded for admin review.",
-    "interestFail": "Could not submit interest. Please try again."
+    "interestFail": "Could not submit interest. Please try again.",
+    "interestAlready": "You've already registered interest for this project.",
+    "interested": "Interested ✓"
   },
 
   "signup": {
@@ -431,11 +436,18 @@
     "privacy": "Privacy & Terms",
     "create": "Create Account",
     "creating": "Creating…",
+
     "alertAccept": "You must accept the Privacy & Terms.",
     "alertRequired": "Please complete all required fields (Full Name, Email, Password, Date of Birth).",
     "alertExists": "An account with this email already exists.",
     "alertOk": "Account created. Please login.",
-    "alertFail": "Could not create account."
+    "alertFail": "Could not create account.",
+
+    "mustAccept": "You must accept the Privacy & Terms.",
+    "invalidDob": "Please enter a valid date of birth (YYYY-MM-DD).",
+    "exists": "An account with this email already exists.",
+    "ok": "Account created. Please login.",
+    "fail": "Could not create account."
   },
 
   "reset": {
@@ -475,6 +487,7 @@
     "updated": "Password updated. You can now log in.",
     "couldNotFinish": "Could not reset password."
   },
+
   "projectDetail": {
     "loading": "Loading project...",
     "notFound": "Project not found.",
@@ -487,12 +500,12 @@
     "enterAmount": "Enter amount",
     "paymentMethod": "Payment Method",
     "methods": {
-    "mbok": "Bank of Khartoum (M-BOK)",
-    "fawry": "Fawry",
-    "cash": "Cash / Collection Point",
-    "Planned": "Planned",
-    "Active": "Active",
-    "Completed": "Completed"
+      "mbok": "Bank of Khartoum (M-BOK)",
+      "fawry": "Fawry",
+      "cash": "Cash / Collection Point",
+      "Planned": "Planned",
+      "Active": "Active",
+      "Completed": "Completed"
     },
     "uploadInvoice": "Upload Payment Invoice",
     "submitDonation": "Submit Donation",

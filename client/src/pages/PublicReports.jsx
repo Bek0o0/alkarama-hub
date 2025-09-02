@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import StatusBadge from "../components/StatusBadge";
 import { useTranslation } from "react-i18next";
 import { API_BASE } from "../apiBase";
@@ -6,42 +6,45 @@ import { API_BASE } from "../apiBase";
 export default function PublicReports() {
   const [reports, setReports] = useState([]);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("Public");
 
   const { t, i18n } = useTranslation();
   const dir = i18n.language === "ar" ? "rtl" : "ltr";
 
   useEffect(() => {
-    fetch(`${API_BASE}/reports`)
+    // Safer single slash; works whether API_BASE ends with '/' or not.
+    fetch(`${API_BASE.replace(/\/+$/,"")}/reports`)
       .then((res) => res.json())
       .then((data) => setReports(Array.isArray(data) ? data : []))
       .catch(() => setReports([]));
   }, []);
 
-  const categoryOptions = useMemo(() => {
-    return Array.from(new Set(reports.map((r) => r.category).filter(Boolean)));
-  }, [reports]);
-
-  const statusOptions = useMemo(() => {
-    return Array.from(new Set(reports.map((r) => r.status).filter(Boolean)));
-  }, [reports]);
-
   const filteredReports = reports
     .filter((r) => {
-      const matchesStatus = statusFilter ? (r.status || "") === statusFilter : true;
-      const matchesCategory = categoryFilter ? r.category === categoryFilter : true;
+      // ---- tolerant "public" detection ----
+      const statusRaw =
+        (r?.status ??
+          r?.visibility ??
+          (r?.isPublic ? "public" : "") ??
+          "") + "";
+      const statusClean = statusRaw.trim().toLowerCase();
 
+      const isPublic =
+        statusClean === "public" ||
+        statusClean.startsWith("public") || // handles "Public " / "public\n"
+        r?.isPublic === true;
+
+      if (!isPublic) return false;
+
+      // ---- search (unchanged) ----
       const q = search.trim().toLowerCase();
-      const matchesSearch =
-        q.length === 0
-          ? true
-          : (r.title || "").toLowerCase().includes(q) ||
-            (r.description || "").toLowerCase().includes(q) ||
-            (r.category || "").toLowerCase().includes(q) ||
-            (r.location || "").toLowerCase().includes(q);
+      if (!q) return true;
 
-      return matchesStatus && matchesCategory && matchesSearch;
+      return (
+        (r.title || "").toLowerCase().includes(q) ||
+        (r.description || "").toLowerCase().includes(q) ||
+        (r.category || "").toLowerCase().includes(q) ||
+        (r.location || "").toLowerCase().includes(q)
+      );
     })
     .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
@@ -56,6 +59,7 @@ export default function PublicReports() {
         </h1>
       </div>
 
+      {/* Controls: search + clear (no dropdowns) */}
       <div
         className={`flex flex-col md:flex-row gap-4 mb-6 md:items-center md:justify-between ${
           dir === "rtl" ? "md:[direction:ltr]" : ""
@@ -69,42 +73,8 @@ export default function PublicReports() {
           onChange={(e) => setSearch(e.target.value)}
           style={{ direction: dir }}
         />
-
         <div className="flex gap-3">
-          <select
-            className="input"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="">{t("publicReports.allCategories")}</option>
-            {categoryOptions.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="input"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            {["Public", ...statusOptions.filter((s) => s !== "Public")].map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-            <option value="">{t("publicReports.allStatuses", "All Statuses")}</option>
-          </select>
-
-          <button
-            className="btn-outline"
-            onClick={() => {
-              setSearch("");
-              setCategoryFilter("");
-              setStatusFilter("Public");
-            }}
-          >
+          <button className="btn-outline" onClick={() => setSearch("")}>
             {t("publicReports.clear")}
           </button>
         </div>
@@ -126,9 +96,7 @@ export default function PublicReports() {
                 }`}
               >
                 <div>
-                  <h3 className="text-lg font-bold text-brandNavy">
-                    {report.title}
-                  </h3>
+                  <h3 className="text-lg font-bold text-brandNavy">{report.title}</h3>
                   <p className="text-sm text-gray-600">
                     <strong>{t("publicReports.date")}:</strong> {fmtDate(report.createdAt)}{" "}
                     | <strong>{t("publicReports.category")}:</strong> {report.category}{" "}

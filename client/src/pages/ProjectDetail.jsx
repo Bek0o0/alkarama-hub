@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { API_BASE } from "../apiBase";
 
 export default function ProjectDetail() {
   const { t, i18n } = useTranslation();
@@ -15,24 +14,23 @@ export default function ProjectDetail() {
   const [paymentMethod, setPaymentMethod] = useState("mbook");
   const [invoice, setInvoice] = useState(null);
   const [user, setUser] = useState(null);
+  const [interestBusy, setInterestBusy] = useState(false);
 
+  // Keep same API resolution pattern you already use elsewhere
+  const API = useMemo(() => process.env.REACT_APP_API || "http://localhost:5000", []);
   const role = useMemo(() => localStorage.getItem("userRole"), []);
   const email = useMemo(() => localStorage.getItem("userEmail"), []);
 
-  const pick = useCallback(
-    (obj, baseKey) => {
-      const lang = i18n.language || "en";
-      const ar = obj[`${baseKey}_ar`];
-      const en = obj[`${baseKey}_en`];
-      if (lang === "ar") return ar || obj[baseKey] || en || "";
-      return en || obj[baseKey] || ar || "";
-    },
-    [i18n.language]
-  );
+  const pick = (obj, baseKey) => {
+    const lang = i18n.language || "en";
+    const ar = obj[`${baseKey}_ar`];
+    const en = obj[`${baseKey}_en`];
+    if (lang === "ar") return ar || obj[baseKey] || en || "";
+    return en || obj[baseKey] || ar || "";
+  };
 
-  const fetchProject = useCallback(() => {
-    setLoading(true);
-    fetch(`http://localhost:5000/projects/${id}`)
+  const fetchProject = () => {
+    fetch(`${API}/projects/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setProject(data);
@@ -43,22 +41,20 @@ export default function ProjectDetail() {
         setProject(null);
         setLoading(false);
       });
-  }, [id]);
+  };
 
   useEffect(() => {
-    const e = localStorage.getItem("userEmail");
-    if (e) {
-      fetch(`http://localhost:5000/users?email=${e}`)
+    if (email) {
+      fetch(`${API}/users?email=${encodeURIComponent(email)}`)
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data) && data.length > 0) setUser(data[0]);
-        });
+        })
+        .catch(() => {});
     }
-  }, []);
-
-  useEffect(() => {
     fetchProject();
-  }, [fetchProject]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, API]);
 
   const handleDonate = async () => {
     if (!user) {
@@ -68,7 +64,7 @@ export default function ProjectDetail() {
     }
 
     const amount = parseFloat(donationAmount);
-    if (isNaN(amount) || amount <= 0) {
+    if (Number.isNaN(amount) || amount <= 0) {
       alert(t("projectDetail.alert.enterValidAmount"));
       return;
     }
@@ -81,7 +77,7 @@ export default function ProjectDetail() {
     const updatedAmount = (project.donated || 0) + amount;
 
     try {
-      await fetch(`http://localhost:5000/projects/${id}`, {
+      await fetch(`${API}/projects/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ donated: updatedAmount }),
@@ -100,7 +96,7 @@ export default function ProjectDetail() {
         timestamp: new Date().toISOString(),
       };
 
-      await fetch(`${API_BASE}/donations`, {
+      await fetch(`${API}/donations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(donation),
@@ -116,33 +112,70 @@ export default function ProjectDetail() {
     }
   };
 
+  // ---------- DEDUPED, IDEMPOTENT INTEREST CREATION ----------
   const expressInterest = async () => {
     if (role !== "user" || !email) return;
-    const payload = {
-      id: Date.now().toString(),
-      projectId: id,
-      userEmail: email,
-      createdAt: new Date().toISOString(),
-    };
+
     try {
-      await fetch(`${API_BASE}/interests`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      setInterestBusy(true);
+
+      // 1) Strong duplicate check (works everywhere): query by (projectId, userEmail)
+      const queryUrl = `${API}/interests?projectId=${encodeURIComponent(
+        id
+      )}&userEmail=${encodeURIComponent(email)}`;
+      const exist = await fetch(queryUrl).then((r) => r.json()).catch(() => []);
+      if (Array.isArray(exist) && exist.length > 0) {
+        alert(t("projectsPublic.interestAlready") || t("projectDetail.alert.interestOk"));
+        return;
+      }
+
+      // 2) Deterministic, safe id (alphanumeric + underscores only)
+      const safeEmail = String(email).toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const interestId = `interest_${id}_${safeEmail}`;
+
+      const payload = {
+        id: interestId,
+        projectId: id,
+        userEmail: email,
+        createdAt: new Date().toISOString(),
+      };
+
+      // 3) Try idempotent PUT first
+      let ok = false;
+      try {
+        const putRes = await fetch(`${API}/interests/${interestId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        ok = putRes.ok;
+      } catch (_) {
+        ok = false;
+      }
+
+      // 4) Fallback to POST if PUT not allowed by host
+      if (!ok) {
+        const postRes = await fetch(`${API}/interests`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!postRes.ok) throw new Error("Failed to save interest");
+      }
+
       alert(t("projectDetail.alert.interestOk"));
     } catch (e) {
       console.error(e);
       alert(t("projectDetail.alert.interestFail"));
+    } finally {
+      setInterestBusy(false);
     }
   };
+  // ---------- END FIX ----------
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center text-gray-600"
-        dir={isRTL ? "rtl" : "ltr"}
-      >
+      <div className="min-h-screen flex items-center justify-center text-gray-600" dir={isRTL ? "rtl" : "ltr"}>
         {t("projectDetail.loading")}
       </div>
     );
@@ -150,10 +183,7 @@ export default function ProjectDetail() {
 
   if (!project) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center text-red-600 font-semibold"
-        dir={isRTL ? "rtl" : "ltr"}
-      >
+      <div className="min-h-screen flex items-center justify-center text-red-600 font-semibold" dir={isRTL ? "rtl" : "ltr"}>
         {t("projectDetail.notFound")}
       </div>
     );
@@ -227,8 +257,8 @@ export default function ProjectDetail() {
 
         {role === "user" && (
           <div className="flex gap-3">
-            <button onClick={expressInterest} className="btn-outline">
-              {t("projectDetail.imInterestedVolunteer")}
+            <button onClick={expressInterest} className="btn-outline" disabled={interestBusy}>
+              {interestBusy ? t("common.loading") : t("projectDetail.imInterestedVolunteer")}
             </button>
           </div>
         )}

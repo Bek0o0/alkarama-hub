@@ -49,11 +49,27 @@ const REVERSE = (() => {
   return map;
 })();
 
+// Accept string OR array and return canonical tokens
 const toCanonicalTokens = (source) => {
+  if (Array.isArray(source)) {
+    return source
+      .flatMap((s) => toCanonicalTokens(String(s || "")))
+      .filter(Boolean);
+  }
   const toks = normalize(source)
     .split(/[\s,]+/)
     .filter(Boolean);
   return toks.map((tok) => REVERSE.get(tok) || tok);
+};
+
+// Get tags from project in any localization/shape
+const getProjectTags = (p) => {
+  const raw = []
+    .concat(p?.tags ?? [])
+    .concat(p?.tags_en ?? [])
+    .concat(p?.tags_ar ?? []);
+  // raw can contain arrays/strings; toCanonicalTokens handles both
+  return toCanonicalTokens(raw);
 };
 
 /* --------------------------------------------------------------------------- */
@@ -86,10 +102,10 @@ export default function AdminMatching() {
   const pick = useCallback(
     (obj, baseKey) => {
       const lang = i18n.language || "en";
-      const ar = obj[`${baseKey}_ar`];
-      const en = obj[`${baseKey}_en`];
-      if (lang === "ar") return ar || obj[baseKey] || en || "";
-      return en || obj[baseKey] || ar || "";
+      const ar = obj?.[`${baseKey}_ar`];
+      const en = obj?.[`${baseKey}_en`];
+      if (lang === "ar") return ar || obj?.[baseKey] || en || "";
+      return en || obj?.[baseKey] || ar || "";
     },
     [i18n.language]
   );
@@ -97,26 +113,20 @@ export default function AdminMatching() {
   // Stable scoring function (depends on pick)
   const score = useCallback(
     (project, pro) => {
-      const pTags = Array.isArray(project.tags)
-        ? project.tags
-        : String(project.tags || "")
-            .split(",")
-            .map((x) => x.trim())
-            .filter(Boolean);
-
       const projectText = [pick(project, "title"), pick(project, "summary")].join(" ");
 
       const pCanon = new Set([
-        ...pTags.flatMap((x) => toCanonicalTokens(x)),
+        ...getProjectTags(project),
         ...toCanonicalTokens(projectText),
       ]);
 
-      const proText = [
-        pro.profession || pro.profile?.profession || "",
-        pro.expertise || pro.profile?.expertise || "",
-      ].join(",");
-
-      const proCanon = toCanonicalTokens(proText);
+      // accept arrays or strings; include profile fallbacks
+      const proParts = []
+        .concat(pro.profession ?? [])
+        .concat(pro.profile?.profession ?? [])
+        .concat(pro.expertise ?? [])
+        .concat(pro.profile?.expertise ?? []);
+      const proCanon = toCanonicalTokens(proParts);
 
       let s = 0;
       for (const tok of proCanon) if (pCanon.has(tok)) s++;
