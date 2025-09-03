@@ -13,7 +13,6 @@ const AdminReports = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
 
-  // email -> user (for clickable links)
   const [usersByEmail, setUsersByEmail] = useState({});
 
   useEffect(() => {

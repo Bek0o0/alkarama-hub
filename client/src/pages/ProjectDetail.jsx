@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export default function ProjectDetail() {
@@ -11,7 +11,7 @@ export default function ProjectDetail() {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [donationAmount, setDonationAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("mbook");
+  const [paymentMethod, setPaymentMethod] = useState("mbok"); // consistency with i18n key
   const [invoice, setInvoice] = useState(null);
   const [user, setUser] = useState(null);
   const [interestBusy, setInterestBusy] = useState(false);
@@ -28,7 +28,9 @@ export default function ProjectDetail() {
     return en || obj[baseKey] || ar || "";
   };
 
-  const fetchProject = () => {
+  // ✅ Memoised so it is stable in the dependency array
+  const fetchProject = useCallback(() => {
+    setLoading(true);
     fetch(`${API}/projects/${id}`)
       .then((res) => res.json())
       .then((data) => {
@@ -40,9 +42,10 @@ export default function ProjectDetail() {
         setProject(null);
         setLoading(false);
       });
-  };
+  }, [API, id]);
 
   useEffect(() => {
+    // Load current user (if any)
     if (email) {
       fetch(`${API}/users?email=${encodeURIComponent(email)}`)
         .then((res) => res.json())
@@ -51,8 +54,9 @@ export default function ProjectDetail() {
         })
         .catch(() => {});
     }
+    // Load project
     fetchProject();
-  }, [id, API]);
+  }, [API, email, fetchProject]);
 
   const handleDonate = async () => {
     if (!user) {
@@ -135,6 +139,7 @@ export default function ProjectDetail() {
         createdAt: new Date().toISOString(),
       };
 
+      // Try PUT first (idempotent), fall back to POST
       let ok = false;
       try {
         const putRes = await fetch(`${API}/interests/${interestId}`, {
@@ -143,7 +148,7 @@ export default function ProjectDetail() {
           body: JSON.stringify(payload),
         });
         ok = putRes.ok;
-      } catch (_) {
+      } catch {
         ok = false;
       }
 
@@ -189,7 +194,7 @@ export default function ProjectDetail() {
 
   const renderBankDetails = () => {
     switch (paymentMethod) {
-      case "mbook":
+      case "mbok":
         return (
           <div className="bg-blue-50 border p-4 rounded text-sm">
             <p><strong>{t("projectDetail.mbok.title")}</strong></p>
@@ -272,7 +277,7 @@ export default function ProjectDetail() {
             onChange={(e) => setPaymentMethod(e.target.value)}
             className="input w-full"
           >
-            <option value="mbook">{t("projectDetail.methods.mbok")}</option>
+            <option value="mbok">{t("projectDetail.methods.mbok")}</option>
             <option value="fawry">{t("projectDetail.methods.fawry")}</option>
             <option value="cash">{t("projectDetail.methods.cash")}</option>
           </select>
