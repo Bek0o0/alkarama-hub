@@ -34,7 +34,6 @@ export default function Signup() {
   const submit = async (e) => {
     e.preventDefault();
 
-    // use the keys you have in your locales (alertAccept / alertRequired / alertExists / alertOk / alertFail)
     if (!form.accept) {
       alert(t("signup.alertAccept"));
       return;
@@ -44,10 +43,8 @@ export default function Signup() {
       return;
     }
 
-    // extra guard if browser locale doesn't enforce <input type="date">
     const dobIsValid = !Number.isNaN(new Date(form.dob).getTime());
     if (!dobIsValid) {
-      // optional key; falls back to English if missing
       alert(t("signup.invalidDob") || "Please enter a valid date of birth.");
       return;
     }
@@ -66,7 +63,7 @@ export default function Signup() {
       id: Math.random().toString(36).slice(2, 6),
       fullName: form.fullName.trim(),
       email: form.email.trim(),
-      password: form.password, // demo only
+      password: form.password,
       dob: form.dob,
       country: form.country.trim(),
       profession: form.profession.trim(),
@@ -81,7 +78,6 @@ export default function Signup() {
     try {
       setBusy(true);
 
-      // use API_BASE (not localhost) for the duplicate check
       const check = await fetch(
         `${API_BASE}/users?email=${encodeURIComponent(newUser.email)}`
       );

@@ -25,7 +25,6 @@ const AdminDashboard = () => {
     try {
       const res = await fetch(`${API_BASE}/users`);
       const data = await res.json();
-      // show only end-user accounts (role === "user")
       setUsers((Array.isArray(data) ? data : []).filter((u) => u.role === "user"));
     } catch (err) {
       console.error("Failed to fetch users:", err);
@@ -63,7 +62,6 @@ const AdminDashboard = () => {
           Admin Dashboard
         </h1>
 
-        {/* Civic Reports */}
         <section className="mb-16">
           <h2 className="text-2xl font-semibold mb-6 text-textDark">Civic Reports</h2>
           {reports.length === 0 ? (
@@ -122,7 +120,6 @@ const AdminDashboard = () => {
           )}
         </section>
 
-        {/* Users / Professionals */}
         <section>
           <h2 className="text-2xl font-semibold mb-6 text-textDark">Users</h2>
           {users.length === 0 ? (
@@ -151,7 +148,6 @@ const AdminDashboard = () => {
                     {u.country || "N/A"}
                   </p>
 
-                  {/* Verification (safe display) */}
                   <p className="text-sm text-gray-600 mt-1">
                     Verification:{" "}
                     {u?.nationalIdHash ? (

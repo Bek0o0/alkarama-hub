@@ -10,7 +10,7 @@ const Profile = () => {
   const [editing, setEditing] = useState(false);
   const [userId, setUserId] = useState(null);
   const [matchedProjects, setMatchedProjects] = useState([]);
-  const [saving, setSaving] = useState(false); // for verification submit
+  const [saving, setSaving] = useState(false);
 
   const [idForm, setIdForm] = useState({ idType: "national", idValue: "" });
   const [idError, setIdError] = useState("");
@@ -102,7 +102,7 @@ const Profile = () => {
   const validateId = () => {
     setIdError("");
     const v = idForm.idValue.trim();
-    if (!v) return true; // empty is allowed (user may not want to provide)
+    if (!v) return true;
     if (idForm.idType === "national" && !validateNationalId(v)) {
       setIdError(t("profile.idErrorNational"));
       return false;
@@ -134,8 +134,8 @@ const Profile = () => {
 
       const payload = {
         idType,
-        nationalIdHash, // one-way hash only
-        idLast4,        // last 4 digits only
+        nationalIdHash,
+        idLast4,
         verified: !!nationalIdHash,
       };
 
@@ -162,7 +162,6 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen" style={{ direction: dir }}>
-      {/* brand hero */}
       <section className="bg-brandNavy text-white">
         <div className={`max-w-5xl mx-auto px-6 py-8 flex items-center gap-3 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
           <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
@@ -172,11 +171,8 @@ const Profile = () => {
       </section>
 
       <div className="max-w-5xl mx-auto px-4 py-10 space-y-8">
-        {/* Content */}
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left column: account + professional (read/edit) */}
           <div className="lg:col-span-2 space-y-8">
-            {/* View mode */}
             {!editing ? (
               <div className="bg-white/95 p-8 shadow-soft rounded-2xl border">
                 <h2 className="text-xl font-bold text-brandNavy mb-4">
@@ -301,7 +297,6 @@ const Profile = () => {
             )}
           </div>
 
-          {/* Right column: Identity Verification (Optional) */}
           <div className="space-y-8">
             <div className="bg-white/95 p-8 shadow-soft rounded-2xl border">
               <h2 className="text-xl font-bold text-brandNavy mb-2">
@@ -353,7 +348,6 @@ const Profile = () => {
               </form>
             </div>
 
-            {/* Profile meta */}
             <div className="bg-white/95 p-6 shadow-soft rounded-2xl border text-sm text-gray-600">
               <p>
                 <span className="font-semibold">{t("profile.createdAt")}:</span>{" "}

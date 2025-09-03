@@ -1,19 +1,12 @@
 const AR_DIACRITICS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g;
 
 const SYNONYMS = {
-  // construction
   "construction": ["construction", "constructions", "بناء", "اعمار", "إعمار", "إنشاءات", "تشييد"],
-  // software / IT
   "software": ["software", "sw", "it", "برمجة", "برمجيات", "تطبيقات", "تقنية"],
-  // engineering
   "engineering": ["engineering", "eng", "هندسة", "مهندس", "مهندسين"],
-  // education
   "education": ["education", "ed", "تعليم", "تدريس", "مدارس", "جامعات"],
-  // medical/health
   "medical": ["medical", "health", "صحة", "طبي", "طبية"],
-  // security
   "security": ["security", "أمن"],
-  // infrastructure
   "infrastructure": ["infrastructure", "بنية", "بنية تحتية"],
 };
 

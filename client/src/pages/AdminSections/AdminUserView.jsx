@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 export default function AdminUserView() {
   const { t } = useTranslation();
-  const { id } = useParams(); // can be user.id OR email
+  const { id } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,6 @@ export default function AdminUserView() {
 
         let data = null;
 
-        // If :id looks like an email, fetch by email query
         if (id && id.includes("@")) {
           const res = await fetch(
             `http://localhost:5000/users?email=${encodeURIComponent(id)}`

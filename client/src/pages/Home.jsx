@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-/* ---------- Live clock ---------- */
 function LiveClock() {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
@@ -19,11 +18,11 @@ function LiveClock() {
 
 export default function Home() {
   const navigate = useNavigate();
-  const role = localStorage.getItem("userRole"); // "admin" | "user" | null
+  const role = localStorage.getItem("userRole");
   const { t, i18n } = useTranslation();
   const dir = i18n.language === "ar" ? "rtl" : "ltr";
 
-  // gallery captions come from i18n
+
   const captions = t("home.galleryCaptions", { returnObjects: true });
   const GALLERY = [
     { src: "/sudan/meroe.jpg", caption: captions?.[0] || "Meroë Pyramids — Sudan" },
@@ -50,12 +49,12 @@ export default function Home() {
           />
         ))}
 
-        {/* gradient + caption */}
+
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-black/60 via-black/20 to-transparent">
           <p className="text-white/95 text-sm md:text-base">{GALLERY[i].caption}</p>
         </div>
 
-        {/* dots */}
+
         <div className={`absolute ${dir === "rtl" ? "left-4" : "right-4"} top-4 flex gap-2`}>
           {GALLERY.map((_, idx) => (
             <button
@@ -72,7 +71,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero */}
+
       <section className="bg-brandNavy text-white">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <div className={`flex items-center justify-between ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
@@ -112,10 +111,8 @@ export default function Home() {
         <div className="h-1 w-full bg-brandGold" />
       </section>
 
-      {/* Tiles */}
       <section className="px-4 mt-10">
         <div className="max-w-7xl mx-auto grid gap-6 md:grid-cols-3">
-          {/* Hide Civic Reporting card for admins (keeps your original rule) */}
           {role !== "admin" && (
             <Link
               to="/submit-report"
@@ -144,7 +141,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Announcements */}
       <section className="px-4 mt-10">
         <div className="max-w-7xl mx-auto">
           <div className="rounded-xl border bg-white/80 backdrop-blur shadow-soft overflow-hidden">
@@ -160,7 +156,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Visual gallery */}
       <section className="px-4 mt-16 pb-20">
         <div className="max-w-7xl mx-auto">
           <h2 className={`section-title ${dir === "rtl" ? "text-right" : ""}`}>{t("home.scenes")}</h2>

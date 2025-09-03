@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { getLocalized } from "../../utils/i18nContent";
 import { API_BASE } from "../../apiBase";
 
-/** Convert a File to a Base64 data URL (for quick demo storage in JSON server) */
 function toBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -17,11 +16,9 @@ export default function AdminProjects() {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === "rtl";
 
-  // list + ui
   const [projects, setProjects] = useState([]);
   const [search, setSearch] = useState("");
 
-  // new project form
   const [title, setTitle] = useState("");
   const [titleAr, setTitleAr] = useState("");
   const [summary, setSummary] = useState("");
@@ -76,17 +73,17 @@ export default function AdminProjects() {
     try {
       setBusy(true);
 
-      let imageDataUrl = imagePreview; // already base64 if selected
+      let imageDataUrl = imagePreview; 
       if (!imageDataUrl && imageFile) {
         imageDataUrl = await toBase64(imageFile);
       }
 
       const payload = {
         id: Date.now().toString(),
-        title: title.trim(), // English (legacy key)
-        title_ar: titleAr.trim(), // Arabic
-        summary: summary.trim(), // English (legacy key)
-        summary_ar: summaryAr.trim(), // Arabic
+        title: title.trim(), 
+        title_ar: titleAr.trim(),
+        summary: summary.trim(), 
+        summary_ar: summaryAr.trim(), 
         cost: Number(cost || 0),
         donated: 0,
         status,
@@ -94,7 +91,7 @@ export default function AdminProjects() {
           .split(",")
           .map((x) => x.trim())
           .filter(Boolean),
-        image: imageDataUrl || "", // Optional image (base64)
+        image: imageDataUrl || "", 
         createdAt: new Date().toISOString(),
       };
 
@@ -135,7 +132,6 @@ export default function AdminProjects() {
 
   return (
     <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
-      {/* Header / Add Form */}
       <div className="bg-white/95 rounded-2xl shadow-soft p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-brandNavy">
@@ -165,7 +161,6 @@ export default function AdminProjects() {
         </p>
 
         <div className="grid md:grid-cols-2 gap-4">
-          {/* Titles */}
           <div>
             <label className="label">{t("admin.projects.titlePh")} (EN)</label>
             <input
@@ -186,7 +181,6 @@ export default function AdminProjects() {
             />
           </div>
 
-          {/* Summaries */}
           <div className="md:col-span-1">
             <label className="label">{t("admin.projects.colSummary")} (EN)</label>
             <textarea
@@ -207,7 +201,6 @@ export default function AdminProjects() {
             />
           </div>
 
-          {/* Cost / Status / Tags */}
           <div>
             <label className="label">{t("admin.projects.costPh")}</label>
             <input
@@ -241,7 +234,6 @@ export default function AdminProjects() {
             />
           </div>
 
-          {/* Image upload */}
           <div className="md:col-span-2">
             <label className="label">
               {t("projectDetail.uploadInvoice").replace(
@@ -269,7 +261,6 @@ export default function AdminProjects() {
         </div>
       </div>
 
-      {/* Projects table */}
       <div className="bg-white/95 rounded-2xl shadow-soft p-6 overflow-x-auto">
         {filtered.length === 0 ? (
           <p className="text-gray-500 italic">{t("admin.projects.empty")}</p>

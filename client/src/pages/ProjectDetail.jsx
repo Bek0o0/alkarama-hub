@@ -16,7 +16,6 @@ export default function ProjectDetail() {
   const [user, setUser] = useState(null);
   const [interestBusy, setInterestBusy] = useState(false);
 
-  // Keep same API resolution pattern you already use elsewhere
   const API = useMemo(() => process.env.REACT_APP_API || "http://localhost:5000", []);
   const role = useMemo(() => localStorage.getItem("userRole"), []);
   const email = useMemo(() => localStorage.getItem("userEmail"), []);
@@ -53,7 +52,6 @@ export default function ProjectDetail() {
         .catch(() => {});
     }
     fetchProject();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, API]);
 
   const handleDonate = async () => {
@@ -112,14 +110,12 @@ export default function ProjectDetail() {
     }
   };
 
-  // ---------- DEDUPED, IDEMPOTENT INTEREST CREATION ----------
   const expressInterest = async () => {
     if (role !== "user" || !email) return;
 
     try {
       setInterestBusy(true);
 
-      // 1) Strong duplicate check (works everywhere): query by (projectId, userEmail)
       const queryUrl = `${API}/interests?projectId=${encodeURIComponent(
         id
       )}&userEmail=${encodeURIComponent(email)}`;
@@ -129,7 +125,6 @@ export default function ProjectDetail() {
         return;
       }
 
-      // 2) Deterministic, safe id (alphanumeric + underscores only)
       const safeEmail = String(email).toLowerCase().replace(/[^a-z0-9]/g, "_");
       const interestId = `interest_${id}_${safeEmail}`;
 
@@ -140,7 +135,6 @@ export default function ProjectDetail() {
         createdAt: new Date().toISOString(),
       };
 
-      // 3) Try idempotent PUT first
       let ok = false;
       try {
         const putRes = await fetch(`${API}/interests/${interestId}`, {
@@ -153,7 +147,6 @@ export default function ProjectDetail() {
         ok = false;
       }
 
-      // 4) Fallback to POST if PUT not allowed by host
       if (!ok) {
         const postRes = await fetch(`${API}/interests`, {
           method: "POST",
@@ -171,7 +164,6 @@ export default function ProjectDetail() {
       setInterestBusy(false);
     }
   };
-  // ---------- END FIX ----------
 
   if (loading) {
     return (
@@ -263,7 +255,6 @@ export default function ProjectDetail() {
           </div>
         )}
 
-        {/* Donation Form */}
         <div className="mt-6 space-y-4">
           <label className="label">{t("projectDetail.donationAmountUSD")}</label>
           <input

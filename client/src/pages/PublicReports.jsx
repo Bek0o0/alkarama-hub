@@ -11,7 +11,6 @@ export default function PublicReports() {
   const dir = i18n.language === "ar" ? "rtl" : "ltr";
 
   useEffect(() => {
-    // Safer single slash; works whether API_BASE ends with '/' or not.
     fetch(`${API_BASE.replace(/\/+$/,"")}/reports`)
       .then((res) => res.json())
       .then((data) => setReports(Array.isArray(data) ? data : []))
@@ -20,7 +19,6 @@ export default function PublicReports() {
 
   const filteredReports = reports
     .filter((r) => {
-      // ---- tolerant "public" detection ----
       const statusRaw =
         (r?.status ??
           r?.visibility ??
@@ -30,12 +28,11 @@ export default function PublicReports() {
 
       const isPublic =
         statusClean === "public" ||
-        statusClean.startsWith("public") || // handles "Public " / "public\n"
+        statusClean.startsWith("public") ||
         r?.isPublic === true;
 
       if (!isPublic) return false;
 
-      // ---- search (unchanged) ----
       const q = search.trim().toLowerCase();
       if (!q) return true;
 
@@ -59,7 +56,6 @@ export default function PublicReports() {
         </h1>
       </div>
 
-      {/* Controls: search + clear (no dropdowns) */}
       <div
         className={`flex flex-col md:flex-row gap-4 mb-6 md:items-center md:justify-between ${
           dir === "rtl" ? "md:[direction:ltr]" : ""
@@ -80,7 +76,6 @@ export default function PublicReports() {
         </div>
       </div>
 
-      {/* Content */}
       {filteredReports.length === 0 ? (
         <p className="text-center text-gray-500 italic">{t("publicReports.empty")}</p>
       ) : (

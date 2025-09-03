@@ -21,7 +21,6 @@ const Admin = () => {
           {t("admin.dashboardTitle", "Admin Dashboard")}
         </h1>
 
-        {/* Tabs */}
         <div className="flex justify-center gap-4 flex-wrap mb-8">
           {TABS.map((tab) => (
             <button
@@ -44,7 +43,6 @@ const Admin = () => {
           ))}
         </div>
 
-        {/* Panels */}
         {activeTab === "reports" && <AdminReports />}
         {activeTab === "professionals" && <AdminProfessionals />}
         {activeTab === "projects" && <AdminProjects />}

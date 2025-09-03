@@ -7,7 +7,6 @@ export default function About() {
 
   return (
     <div className="min-h-screen" style={{ direction: dir }}>
-      {/* brand hero */}
       <section className="bg-brandNavy text-white">
         <div className={`max-w-6xl mx-auto px-6 py-10 flex items-center gap-3 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
           <img src="/logo.png" alt="Sudan Emblem" className="w-10 h-10 object-contain" />

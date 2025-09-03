@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export default function Login() {
-  // ── original state (unchanged)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -10,7 +9,6 @@ export default function Login() {
   const { t, i18n } = useTranslation();
   const dir = i18n.language === "ar" ? "rtl" : "ltr";
 
-  // ── original submit logic (unchanged)
   const submit = async (e) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
@@ -43,12 +41,10 @@ export default function Login() {
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ direction: dir }}>
-      {/* background accents (visual only) */}
       <div className="absolute inset-0 bg-[radial-gradient(80rem_40rem_at_-10%_-10%,rgba(13,33,53,0.12),transparent),radial-gradient(70rem_40rem_at_110%_110%,rgba(201,166,74,0.12),transparent)]" />
 
       <div className="relative max-w-6xl mx-auto px-6 py-12">
         <div className={`grid lg:grid-cols-2 gap-8 items-center ${dir === "rtl" ? "lg:[direction:ltr]" : ""}`}>
-          {/* Left: brand panel */}
           <section className="hidden lg:block bg-brandNavy text-white rounded-3xl shadow-soft p-10 relative overflow-hidden">
             <div className={`flex items-center gap-3 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
               <img src="/logo.png" alt="Sudan Emblem" className="w-10 h-10 object-contain" />
@@ -70,7 +66,6 @@ export default function Login() {
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-brandGold" />
           </section>
 
-          {/* Right: form card */}
           <section className="bg-white/95 rounded-3xl shadow-soft border p-8">
             <div className={`flex items-center gap-3 mb-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
               <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />
@@ -80,7 +75,6 @@ export default function Login() {
               {t("login.note")}
             </p>
 
-            {/* original form/fields */}
             <form onSubmit={submit} className="space-y-5" style={{ direction: dir }}>
               <div>
                 <label className="label">{t("login.email")}</label>

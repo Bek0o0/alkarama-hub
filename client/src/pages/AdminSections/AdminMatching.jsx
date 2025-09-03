@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { API_BASE } from "../../apiBase";
 
-/* ---------- helpers hoisted out so they don't re-create each render ---------- */
-
 const normalize = (s) =>
   String(s || "")
     .toLowerCase()
@@ -39,7 +37,6 @@ const CANON = {
   security: ["security", "امن", "أمن"],
 };
 
-// Reverse index for quick lookup
 const REVERSE = (() => {
   const map = new Map();
   for (const [canon, arr] of Object.entries(CANON)) {
@@ -49,7 +46,6 @@ const REVERSE = (() => {
   return map;
 })();
 
-// Accept string OR array and return canonical tokens
 const toCanonicalTokens = (source) => {
   if (Array.isArray(source)) {
     return source
@@ -62,17 +58,14 @@ const toCanonicalTokens = (source) => {
   return toks.map((tok) => REVERSE.get(tok) || tok);
 };
 
-// Get tags from project in any localization/shape
 const getProjectTags = (p) => {
   const raw = []
     .concat(p?.tags ?? [])
     .concat(p?.tags_en ?? [])
     .concat(p?.tags_ar ?? []);
-  // raw can contain arrays/strings; toCanonicalTokens handles both
   return toCanonicalTokens(raw);
 };
 
-/* --------------------------------------------------------------------------- */
 
 export default function AdminMatching() {
   const { t, i18n } = useTranslation();
@@ -98,7 +91,6 @@ export default function AdminMatching() {
       });
   }, []);
 
-  // Stable function: returns the localized value for title/summary
   const pick = useCallback(
     (obj, baseKey) => {
       const lang = i18n.language || "en";
@@ -110,7 +102,6 @@ export default function AdminMatching() {
     [i18n.language]
   );
 
-  // Stable scoring function (depends on pick)
   const score = useCallback(
     (project, pro) => {
       const projectText = [pick(project, "title"), pick(project, "summary")].join(" ");
@@ -120,7 +111,6 @@ export default function AdminMatching() {
         ...toCanonicalTokens(projectText),
       ]);
 
-      // accept arrays or strings; include profile fallbacks
       const proParts = []
         .concat(pro.profession ?? [])
         .concat(pro.profile?.profession ?? [])
@@ -135,7 +125,6 @@ export default function AdminMatching() {
     [pick]
   );
 
-  // Memoized filtered results (dependencies are now stable)
   const filtered = useMemo(() => {
     const f = normalize(filter || "");
     return projects

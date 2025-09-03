@@ -94,7 +94,6 @@ const AdminUsers = () => {
           </h1>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-6">
           <input
             className="input md:w-1/2"

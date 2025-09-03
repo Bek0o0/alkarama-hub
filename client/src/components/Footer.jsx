@@ -11,7 +11,6 @@ export default function Footer() {
       <div className="h-1 w-full bg-brandGold" />
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className={`grid md:grid-cols-4 gap-8 ${dir === "rtl" ? "text-right" : ""}`}>
-          {/* Brand */}
           <div>
             <div className={`flex items-center gap-3 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
               <img src="/logo.png" alt="Sudan Emblem" className="w-10 h-10 object-contain" />
@@ -23,7 +22,6 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Quick links */}
           <div>
             <h4 className="font-semibold text-brandGold">{t("footer.quick")}</h4>
             <ul className="mt-3 space-y-2 text-sm">
@@ -34,7 +32,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
           <div>
             <h4 className="font-semibold text-brandGold">{t("footer.support")}</h4>
             <ul className="mt-3 space-y-2 text-sm">
@@ -45,7 +42,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
           <div>
             <h4 className="font-semibold text-brandGold">{t("footer.contact")}</h4>
             <ul className="mt-3 space-y-2 text-sm">

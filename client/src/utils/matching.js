@@ -74,7 +74,7 @@ export function normalizeAR(s) {
 
 export function unicodeTokens(input) {
   const text = normalizeAR(input);
-  const toks = text.match(/\p{L}+\p{M}*|\p{N}+/gu); // letters/numbers
+  const toks = text.match(/\p{L}+\p{M}*|\p{N}+/gu);
   return toks ? toks : [];
 }
 

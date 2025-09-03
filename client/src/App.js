@@ -72,7 +72,6 @@ export default function App() {
             }
           />
 
-          {/* Admin-only */}
           <Route
             path="/admin/*"
             element={

@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -15,12 +14,10 @@ const Navbar = ({ userRole }) => {
     window.location.reload();
   };
 
-  // Hide Projects/About in nav on Home (your previous duplication rule)
   const hideProjectLinksOnHome = pathname === "/";
   const isAdmin = userRole === "admin";
   const isUser = userRole === "user";
 
-  // dir-aware spacing (keeps nice gaps even in RTL)
   const dir = i18n.language === "ar" ? "rtl" : "ltr";
 
   return (
@@ -39,20 +36,16 @@ const Navbar = ({ userRole }) => {
         >
           <li><Link to="/" className="text-gray-700 hover:text-brandNavy">{t("nav.home")}</Link></li>
 
-          {/* About */}
           {!hideProjectLinksOnHome && (
             <li><Link to="/about" className="text-gray-700 hover:text-brandNavy">{t("nav.about")}</Link></li>
           )}
 
-          {/* Projects (hidden on Home to avoid duplication) */}
           {!hideProjectLinksOnHome && (
             <li><Link to="/projects" className="text-gray-700 hover:text-brandNavy">{t("nav.projects")}</Link></li>
           )}
 
-          {/* Public Reports always */}
           <li><Link to="/public-reports" className="text-gray-700 hover:text-brandNavy">{t("nav.publicReports")}</Link></li>
 
-          {/* USER links */}
           {isUser && (
             <>
               <li><Link to="/submit-report" className="text-gray-700 hover:text-brandNavy">{t("nav.submitReport")}</Link></li>
@@ -61,12 +54,10 @@ const Navbar = ({ userRole }) => {
             </>
           )}
 
-          {/* ADMIN link */}
           {isAdmin && (
             <li><Link to="/admin" className="text-gray-700 hover:text-brandNavy">{t("nav.admin")}</Link></li>
           )}
 
-          {/* AUTH */}
           {!userRole && (
             <>
               <li><Link to="/login" className="text-brandGold hover:underline">{t("nav.login")}</Link></li>
@@ -82,7 +73,6 @@ const Navbar = ({ userRole }) => {
             </li>
           )}
 
-          {/* Language */}
           <li className="pl-2 border-l border-gray-200">
             <LanguageSwitch />
           </li>

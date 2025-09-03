@@ -2,14 +2,12 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { API_BASE } from "../apiBase";
 
-/** SHA-256 helper for hashing reset codes (demo security) */
 async function sha256Hex(text) {
   const enc = new TextEncoder().encode(text);
   const buf = await crypto.subtle.digest("SHA-256", enc);
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Generate a 6-digit numeric code as a string */
 function genCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
@@ -18,25 +16,21 @@ export default function ForgotPassword() {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === "rtl";
 
-  // Step state
-  const [step, setStep] = useState(1); // 1 = identify, 2 = verify code & reset
+  const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [infoMsg, setInfoMsg] = useState("");
 
-  // Step 1 fields
   const [email, setEmail] = useState("");
-  const [dob, setDob] = useState("");          // YYYY-MM-DD
-  const [last4, setLast4] = useState("");      // last 4 of ID/passport
+  const [dob, setDob] = useState("");        
+  const [last4, setLast4] = useState(""); 
 
-  // Step 2 fields
   const [code, setCode] = useState("");
   const [p1, setP1] = useState("");
   const [p2, setP2] = useState("");
 
-  // Bookkeeping for reset record
-  const [resetId, setResetId] = useState(null); // id of password_resets item
+  const [resetId, setResetId] = useState(null); 
 
-  /** STEP 1: Identity check + create reset token (hashed code) */
+
   const startReset = async (e) => {
     e.preventDefault();
     setInfoMsg("");
@@ -49,7 +43,7 @@ export default function ForgotPassword() {
     try {
       setBusy(true);
 
-      // 1) Lookup user
+ 
       const res = await fetch(`http://localhost:5000/users?email=${encodeURIComponent(email.trim())}`);
       const data = await res.json();
       const user = Array.isArray(data) && data.length ? data[0] : null;
@@ -60,7 +54,7 @@ export default function ForgotPassword() {
         return;
       }
 
-      // 2) Check DoB
+   
       const dobMatches = (user.dob || "").slice(0, 10) === dob;
       if (!dobMatches) {
         alert(t("reset.dobMismatch"));
@@ -68,7 +62,7 @@ export default function ForgotPassword() {
         return;
       }
 
-      // 3) Require last4 match if present
+    
       if (user.idLast4) {
         if (last4 !== String(user.idLast4)) {
           alert(t("reset.last4Mismatch"));
@@ -81,17 +75,17 @@ export default function ForgotPassword() {
         return;
       }
 
-      // cleanup any existing reset records for this email
+
       const existingRes = await fetch(`http://localhost:5000/password_resets?email=${encodeURIComponent(email.trim())}`);
       const existing = await existingRes.json();
       for (const r of existing || []) {
         await fetch(`http://localhost:5000/password_resets/${r.id}`, { method: "DELETE" });
       }
 
-      // create new record
+
       const rawCode = genCode();
       const codeHash = await sha256Hex(rawCode);
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutes
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
       const resetRecord = {
         id: Date.now().toString(),
         email: user.email,
@@ -110,7 +104,6 @@ export default function ForgotPassword() {
       setResetId(resetRecord.id);
       setStep(2);
 
-      // DEMO: show the code instead of sending email
       setInfoMsg(t("reset.demoCode", { code: rawCode }));
     } catch (err) {
       console.error(err);
@@ -120,7 +113,7 @@ export default function ForgotPassword() {
     }
   };
 
-  /** STEP 2: Verify code and reset password */
+
   const finishReset = async (e) => {
     e.preventDefault();
     setInfoMsg("");
@@ -141,7 +134,7 @@ export default function ForgotPassword() {
     try {
       setBusy(true);
 
-      // load reset record
+
       const rrRes = await fetch(`http://localhost:5000/password_resets/${resetId}`);
       if (!rrRes.ok) {
         alert(t("reset.sessionMissing"));
@@ -150,7 +143,7 @@ export default function ForgotPassword() {
       }
       const rr = await rrRes.json();
 
-      // expiry & attempts
+ 
       if (new Date(rr.expiresAt).getTime() < Date.now()) {
         await fetch(`http://localhost:5000/password_resets/${rr.id}`, { method: "DELETE" });
         alert(t("reset.expired"));
@@ -164,7 +157,7 @@ export default function ForgotPassword() {
         return;
       }
 
-      // compare code
+
       const codeHash = await sha256Hex(code.trim());
       const ok = codeHash === rr.codeHash;
 
@@ -179,7 +172,7 @@ export default function ForgotPassword() {
         return;
       }
 
-      // update password
+
       const uRes = await fetch(`http://localhost:5000/users?email=${encodeURIComponent(rr.email)}`);
       const list = await uRes.json();
       const user = Array.isArray(list) && list.length ? list[0] : null;
@@ -210,7 +203,6 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
-      {/* Header */}
       <section className="bg-brandNavy text-white">
         <div className="max-w-3xl mx-auto px-6 py-8 flex items-center gap-3">
           <img src="/logo.png" alt="Sudan Emblem" className="w-8 h-8 object-contain" />

@@ -36,14 +36,12 @@ const Projects = () => {
   const setBusy = (projectId, value) =>
     setBusyMap((m) => ({ ...m, [String(projectId)]: !!value }));
 
-  // Load existing interests for this user (case-insensitive email support)
   useEffect(() => {
     if (!userEmailLower) return;
     let cancelled = false;
 
     (async () => {
       try {
-        // Try direct queries first (fast path)
         const [a, b] = await Promise.all([
           fetch(`${API}/interests?email=${encodeURIComponent(userEmailLower)}`).then((r) => r.json()),
           fetch(`${API}/interests?userEmail=${encodeURIComponent(userEmailLower)}`).then((r) => r.json()),
@@ -54,7 +52,6 @@ const Projects = () => {
           ...(Array.isArray(b) ? b : []),
         ];
 
-        // If nothing found (likely case sensitivity), fall back to fetching all and filtering client-side
         if (all.length === 0) {
           const allInterests = await fetch(`${API}/interests`).then((r) => r.json());
           if (Array.isArray(allInterests)) {
@@ -71,7 +68,6 @@ const Projects = () => {
         }
         if (!cancelled) setInterestedMap(map);
       } catch {
-        // ignore preload errors
       }
     })();
 
@@ -80,7 +76,6 @@ const Projects = () => {
     };
   }, [API, userEmailLower]);
 
-  // Robust server-side duplicate check (case-insensitive on email)
   async function hasServerInterest(projectId) {
     try {
       const list = await fetch(
@@ -108,7 +103,6 @@ const Projects = () => {
     const pid = String(projectId);
     if (busyMap[pid] || inflight.current.has(pid)) return;
 
-    // client-side guard
     if (interestedMap[pid]) {
       alert(
         t("projectsPage.interestAlready") ||
@@ -121,7 +115,6 @@ const Projects = () => {
     inflight.current.add(pid);
 
     try {
-      // server-side guard
       const exists = await hasServerInterest(pid);
       if (exists) {
         setInterestedMap((m) => ({ ...m, [pid]: true }));
@@ -136,13 +129,11 @@ const Projects = () => {
 
       const nowIso = new Date().toISOString();
 
-      // Include fields the Admin "Interests" table typically reads:
-      // project / projectTitle, user / userName, email, projectId, createdAt
       const payload = {
         projectId: pid,
-        project: title,          // <— for Admin list
-        projectTitle: title,     // <— for compatibility
-        user: userName || "N/A", // <— for Admin list
+        project: title,
+        projectTitle: title, 
+        user: userName || "N/A", 
         userName: userName || "N/A",
         email: userEmailLower,
         userEmail: userEmailLower,
@@ -150,7 +141,6 @@ const Projects = () => {
         timestamp: nowIso,
       };
 
-      // Let JSON Server auto-generate the id so each record appears in Admin
       const res = await fetch(`${API}/interests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
